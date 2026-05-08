@@ -1,0 +1,249 @@
+Step 0 – Setup dell’ambiente
+Crea la repo
+
+Cartella tipo tesi-simulazione-phishing/.
+
+Dentro:
+
+agents/ (profili agenti in JSON/YAML)
+
+scenarios/ (template dei messaggi)
+
+simulations/ (script Python)
+
+results/ (CSV + grafici)
+
+Virtualenv Python
+
+bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install requests pandas matplotlib
+Installa Ollama
+
+Scarica da https://ollama.com e installa.
+
+Da terminale:
+
+bash
+ollama pull llama3
+Test rapido:
+
+bash
+ollama run llama3 "Ciao, chi sei?"
+Se questo va, hai già un LLM gratuito e locale pronto ad essere usato come “cervello” degli agenti.
+
+Step 1 – Definisci profili e scenari (file di config)
+1.1 Profili agente (es. agents/profiles.json)
+Esempio minimal:
+
+json
+[
+  {
+    "id": "teen_gamer_1",
+    "age": 17,
+    "crypto_experience": "bassa",
+    "security_training": "no",
+    "traits": {
+      "impulsiveness": "alta",
+      "trust_in_brands": "alta",
+      "tech_savvy": "media"
+    }
+  },
+  {
+    "id": "employee_trained_1",
+    "age": 35,
+    "crypto_experience": "media",
+    "security_training": "si",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "media",
+      "tech_savvy": "alta"
+    }
+  }
+]
+In tesi potrai descrivere questi come “archetipi” definiti a partire dalla letteratura su phishing e fattori umani.
+
+1.2 Template di messaggi (es. scenarios/messages.json)
+json
+[
+  {
+    "id": "exchange_kyc_urgente",
+    "type": "phishing",
+    "channel": "email",
+    "description": "Finta mail dell'exchange che minaccia blocco conto se non aggiorni KYC",
+    "text": "Gentile utente, a seguito di un controllo di routine il suo account verrà sospeso entro 24 ore se non aggiorna immediatamente le informazioni KYC. Clicchi qui per verificare...",
+    "features": {
+      "urgency": "alta",
+      "personalization": "bassa",
+      "reward": "nessuno"
+    }
+  },
+  {
+    "id": "defi_airdrop_premio",
+    "type": "phishing",
+    "channel": "social",
+    "description": "Airdrop DeFi con APY assurdi",
+    "text": "Complimenti! Sei stato selezionato per ricevere un airdrop esclusivo del protocollo DeFi X con APY del 500%. Collega il tuo wallet qui per richiedere i token.",
+    "features": {
+      "urgency": "media",
+      "personalization": "bassa",
+      "reward": "altissimo"
+    }
+  }
+]
+Step 2 – Scrivi il “cervello” di un singolo agente
+Crea simulations/agent_llm.py con una funzione tipo:
+
+python
+import requests
+import json
+
+OLLAMA_MODEL = "llama3"
+
+def build_prompt(agent_profile, message):
+    return f"""
+Sei un utente chiamato {agent_profile['id']}.
+
+Profilo:
+- Età: {agent_profile['age']}
+- Esperienza con le criptovalute: {agent_profile['crypto_experience']}
+- Formazione sulla sicurezza: {agent_profile['security_training']}
+- Tratti: impulsività={agent_profile['traits']['impulsiveness']},
+  fiducia nei brand={agent_profile['traits']['trust_in_brands']},
+  competenza tecnologica={agent_profile['traits']['tech_savvy']}.
+
+Ricevi il seguente messaggio ({message['channel']}):
+\"\"\"{message['text']}\"\"\".
+
+Devi scegliere UNA sola azione tra:
+1) IGNORA
+2) CLICCA_SUL_LINK
+3) INSERISCI_CREDENZIALI
+4) CHIEDI_AIUTO_AMICO
+5) SEGNALA_COME_PHISHING
+
+Rispondi in JSON esattamente nel formato:
+{{
+  "choice": "UNA_DELLE_AZIONI_SOPRA",
+  "motivation": "spiega in 2-3 frasi il perché della scelta"
+}}
+"""
+
+def query_llm(prompt: str) -> dict:
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": OLLAMA_MODEL,
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+    data = response.json()
+    text = data["response"]
+    # qui puoi fare un try/except per json.loads, nel caso il modello sgarra
+    try:
+        start = text.index("{")
+        end = text.rindex("}") + 1
+        return json.loads(text[start:end])
+    except Exception:
+        return {"choice": "IGNORA", "motivation": "errore parsing"}
+Questo ti dà la “risposta” di un agente dato il suo profilo e un messaggio.
+
+Step 3 – Orchestratore della simulazione
+Crea simulations/run_simulation.py che:
+
+carica profiles.json e messages.json;
+
+per ogni coppia profilo–messaggio, chiama build_prompt() + query_llm();
+
+scrive una riga in CSV in results/sim_run1.csv.
+
+Pseudo‑struttura:
+
+python
+import json
+import csv
+from datetime import datetime
+from agent_llm import build_prompt, query_llm
+
+with open("agents/profiles.json") as f:
+    profiles = json.load(f)
+with open("scenarios/messages.json") as f:
+    messages = json.load(f)
+
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+out_path = f"results/sim_{timestamp}.csv"
+
+with open(out_path, "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow([
+        "agent_id", "age", "crypto_experience", "security_training",
+        "message_id", "scenario", "choice", "motivation"
+    ])
+
+    for profile in profiles:
+        for message in messages:
+            prompt = build_prompt(profile, message)
+            resp = query_llm(prompt)
+            writer.writerow([
+                profile["id"],
+                profile["age"],
+                profile["crypto_experience"],
+                profile["security_training"],
+                message["id"],
+                message["description"],
+                resp.get("choice", ""),
+                resp.get("motivation", "").replace("\n", " ")
+            ])
+Lanci python simulations/run_simulation.py e ti ritrovi un CSV con centinaia di righe da analizzare.
+
+Step 4 – Analisi base dei risultati
+In un notebook Jupyter (analysis.ipynb) o in uno script Python:
+
+carichi il CSV con pandas;
+
+fai groupby per profilo, età, tipo di messaggio, ecc.;
+
+calcoli percentuali di choice (“INSERISCI_CREDENZIALI” = compromissione).
+
+Esempio:
+
+python
+import pandas as pd
+
+df = pd.read_csv("results/sim_20260508_....csv")
+compromissioni = df[df["choice"] == "INSERISCI_CREDENZIALI"]
+rate_per_profile = compromissioni.groupby("agent_id").size() / df.groupby("agent_id").size()
+print(rate_per_profile)
+Da qui puoi passare ai grafici (bar chart per profilo, heatmap profilo × tipo di messaggio, ecc.).
+
+Cosa è davvero gratis e cosa no
+Ollama + modelli open‑source → gratis, ma dipende dall’hardware (RAM/VRAM, CPU). I lavori su Llama 3 e Mistral mostrano che modelli 7–8B girano ormai bene anche su laptop “normali”, specie con quantizzazione.
+
+Python, VS Code, Git, pandas, matplotlib → tutti gratuiti.
+
+Se per qualche motivo il locale non basta, puoi:
+
+usare un provider con credit free all’inizio (ma occhio che, se ti scappa la mano coi test, non è più “gratis”);
+
+oppure ridurre gli esperimenti (meno agenti, meno scenari) per limitare le chiamate.
+
+Per una triennale, con 40–80 agenti sintetici × 4–6 scenari, resti su numeri gestibilissimi anche con un LLM locale.
+
+Da dove partire oggi
+Installi Ollama e verifichi che llama3 risponda.
+
+Crei la repo con struttura minimal e il virtualenv.
+
+Scrivi prima:
+
+profiles.json con 4–6 archetipi;
+
+messages.json con 3–4 messaggi.
+
+Implementi build_prompt() e query_llm() e test su un solo profilo + messaggio.
+
+Quando vedi che il modello risponde nel formato giusto, aggiungi l’orchestratore e generi il primo CSV.
+
+Da lì possiamo rifinire insieme: migliorare i prompt, calibrare i profili, aggiungere scenari e impostare l’analisi statistica per il capitolo sperimentale.

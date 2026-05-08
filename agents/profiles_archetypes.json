@@ -1,0 +1,257 @@
+[
+  {
+    "id": "teen_gamer_lowsec",
+    "label": "Teen gamer poco attento",
+    "age": 17,
+    "age_group": "15-20",
+    "role": "studente_scuola_superiore",
+    "crypto_experience": "bassa",
+    "security_training": "no",
+    "environment": "uso_social_gaming",
+    "traits": {
+      "impulsiveness": "alta",
+      "trust_in_brands": "alta",
+      "tech_savvy": "media",
+      "attention_level": "bassa",
+      "risk_aversion": "bassa"
+    }
+  },
+  {
+    "id": "uni_student_nonit_avg",
+    "label": "Studente universitario non-IT medio",
+    "age": 21,
+    "age_group": "21-25",
+    "role": "studente_universitario_non_it",
+    "crypto_experience": "media",
+    "security_training": "basilare",
+    "environment": "uso_exchange_mobile",
+    "traits": {
+      "impulsiveness": "media",
+      "trust_in_brands": "media",
+      "tech_savvy": "media",
+      "attention_level": "media",
+      "risk_aversion": "media"
+    }
+  },
+  {
+    "id": "uni_student_it_secaware",
+    "label": "Studente informatica/cyber consapevole",
+    "age": 23,
+    "age_group": "21-25",
+    "role": "studente_informatica_cyber",
+    "crypto_experience": "alta",
+    "security_training": "si",
+    "environment": "uso_defi_nft_hardware_wallet",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "bassa",
+      "tech_savvy": "alta",
+      "attention_level": "alta",
+      "risk_aversion": "media"
+    }
+  },
+  {
+    "id": "young_defi_degen",
+    "label": "DeFi degen giovane",
+    "age": 27,
+    "age_group": "26-30",
+    "role": "trader_defi",
+    "crypto_experience": "molto_alta",
+    "security_training": "autodidatta",
+    "environment": "uso_defi_levata_attivita",
+    "traits": {
+      "impulsiveness": "alta",
+      "trust_in_brands": "media",
+      "tech_savvy": "alta",
+      "attention_level": "bassa",
+      "risk_aversion": "molto_bassa"
+    }
+  },
+  {
+    "id": "employee_office_untrained",
+    "label": "Impiegato aziendale senza formazione",
+    "age": 38,
+    "age_group": "31-45",
+    "role": "impiegato_ufficio",
+    "crypto_experience": "bassa",
+    "security_training": "no",
+    "environment": "email_lavorativa_intensa",
+    "traits": {
+      "impulsiveness": "media",
+      "trust_in_brands": "alta",
+      "tech_savvy": "bassa",
+      "attention_level": "media",
+      "risk_aversion": "media"
+    }
+  },
+  {
+    "id": "employee_office_trained",
+    "label": "Impiegato aziendale formato",
+    "age": 40,
+    "age_group": "31-45",
+    "role": "impiegato_ufficio",
+    "crypto_experience": "bassa",
+    "security_training": "si",
+    "environment": "email_lavorativa_intensa",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "media",
+      "tech_savvy": "media",
+      "attention_level": "alta",
+      "risk_aversion": "alta"
+    }
+  },
+  {
+    "id": "support_worker_stressed",
+    "label": "Operatore helpdesk stressato",
+    "age": 32,
+    "age_group": "31-45",
+    "role": "supporto_clienti",
+    "crypto_experience": "media",
+    "security_training": "si",
+    "environment": "gestione_ticket_continua",
+    "traits": {
+      "impulsiveness": "media",
+      "trust_in_brands": "media",
+      "tech_savvy": "media",
+      "attention_level": "bassa",
+      "risk_aversion": "bassa"
+    }
+  },
+  {
+    "id": "freelance_remote_worker",
+    "label": "Lavoratore remoto freelance",
+    "age": 30,
+    "age_group": "26-30",
+    "role": "freelance",
+    "crypto_experience": "media",
+    "security_training": "no",
+    "environment": "molti_strumenti_online",
+    "traits": {
+      "impulsiveness": "media",
+      "trust_in_brands": "media",
+      "tech_savvy": "alta",
+      "attention_level": "media",
+      "risk_aversion": "media"
+    }
+  },
+  {
+    "id": "sme_owner_busy",
+    "label": "Piccolo imprenditore oberato",
+    "age": 45,
+    "age_group": "31-45",
+    "role": "titolare_pmi",
+    "crypto_experience": "media",
+    "security_training": "no",
+    "environment": "molte_mail_finanza_business",
+    "traits": {
+      "impulsiveness": "alta",
+      "trust_in_brands": "alta",
+      "tech_savvy": "bassa",
+      "attention_level": "bassa",
+      "risk_aversion": "bassa"
+    }
+  },
+  {
+    "id": "retail_investor_middleaged",
+    "label": "Investitore retail di mezza età",
+    "age": 50,
+    "age_group": "46-60",
+    "role": "impiegato_dirigente",
+    "crypto_experience": "media",
+    "security_training": "basilare",
+    "environment": "uso_exchange_custodial",
+    "traits": {
+      "impulsiveness": "media",
+      "trust_in_brands": "alta",
+      "tech_savvy": "media",
+      "attention_level": "media",
+      "risk_aversion": "alta"
+    }
+  },
+  {
+    "id": "senior_lowtech_trusting",
+    "label": "Senior poco tecnico e fiducioso",
+    "age": 67,
+    "age_group": "60+",
+    "role": "pensionato",
+    "crypto_experience": "molto_bassa",
+    "security_training": "no",
+    "environment": "usa_smartphone_ma_non_pc",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "molto_alta",
+      "tech_savvy": "molto_bassa",
+      "attention_level": "media",
+      "risk_aversion": "media"
+    }
+  },
+  {
+    "id": "senior_cautious_informed",
+    "label": "Senior prudente e informato",
+    "age": 63,
+    "age_group": "60+",
+    "role": "pensionato",
+    "crypto_experience": "bassa",
+    "security_training": "basilare",
+    "environment": "lettore_news_tech",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "media",
+      "tech_savvy": "bassa",
+      "attention_level": "alta",
+      "risk_aversion": "alta"
+    }
+  },
+  {
+    "id": "young_airdrop_hunter",
+    "label": "Cacciatore di airdrop",
+    "age": 24,
+    "age_group": "21-25",
+    "role": "studente_lavoratore_parttime",
+    "crypto_experience": "alta",
+    "security_training": "autodidatta",
+    "environment": "partecipa_spesso_airdrop",
+    "traits": {
+      "impulsiveness": "alta",
+      "trust_in_brands": "media",
+      "tech_savvy": "alta",
+      "attention_level": "media",
+      "risk_aversion": "bassa"
+    }
+  },
+  {
+    "id": "exchange_employee_it",
+    "label": "Dipendente IT di exchange",
+    "age": 34,
+    "age_group": "31-45",
+    "role": "sviluppatore_exchange",
+    "crypto_experience": "molto_alta",
+    "security_training": "si",
+    "environment": "contesto_alta_sicurezza",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "bassa",
+      "tech_savvy": "molto_alta",
+      "attention_level": "alta",
+      "risk_aversion": "alta"
+    }
+  },
+  {
+    "id": "callcenter_temp_worker",
+    "label": "Operatore call center a tempo determinato",
+    "age": 29,
+    "age_group": "26-30",
+    "role": "operatore_callcenter",
+    "crypto_experience": "bassa",
+    "security_training": "minima",
+    "environment": "lavoro_ripetitivo_stressante",
+    "traits": {
+      "impulsiveness": "media",
+      "trust_in_brands": "alta",
+      "tech_savvy": "bassa",
+      "attention_level": "bassa",
+      "risk_aversion": "media"
+    }
+  }
+]
