@@ -2,7 +2,7 @@
 
 This repository contains the experimental component of a Bachelor's thesis in Cybersecurity focused on phishing, social engineering, and cryptocurrency-related fraud.
 
-The project implements a controlled **agent-based simulation** in which synthetic user profiles interact with phishing and legitimate messages related to cryptocurrency ecosystems. The objective is to analyze how different user characteristics, message features, and security-awareness levels may influence risky or defensive behavior.
+The project implements a controlled **agent-based simulation** in which synthetic user profiles interact with phishing and legitimate messages related to cryptocurrency ecosystems. The objective is to analyze how different user characteristics, message features and security-awareness levels may influence risky or defensive behavior.
 
 > **Important:** this project is intended exclusively for educational and academic research purposes.  
 > It does not perform real phishing, does not collect credentials, and does not interact with real users or real malicious infrastructure.
@@ -15,7 +15,7 @@ The broader thesis investigates the relationship between cryptocurrencies and so
 
 Although blockchain systems are often technically robust, many successful attacks do not directly break the underlying protocol. Instead, they exploit users, communication channels, trust relationships, poor security awareness, and operational mistakes.
 
-This repository supports the experimental part of the thesis by providing a reproducible framework to simulate user reactions to different phishing scenarios.
+This repository supports the experimental part of the thesis by providing a reproducible framework to simulate user reactions to different phishing scenarios, including generic crypto-phishing scenarios and scenarios inspired by the case study analyzed in the thesis.
 
 ---
 
@@ -24,9 +24,10 @@ This repository supports the experimental part of the thesis by providing a repr
 The main objective of this project is to build a controlled simulation environment to study:
 
 - how different synthetic user profiles react to phishing attempts;
-- how message characteristics such as urgency, reward, impersonation, or technical language influence behavior;
+- how message characteristics such as urgency, reward, impersonation, technical language or perceived account risk influence behavior;
 - how security training and cryptocurrency experience affect simulated decision-making;
 - how phishing messages differ from legitimate messages in terms of user response;
+- how targeted attacks based on social engineering, remote assistance and account-security pretexts may affect high-value cryptocurrency holders;
 - how LLM-based agents can be used as an exploratory tool for behavioral cybersecurity research.
 
 The simulation is **not** intended to estimate real-world phishing susceptibility rates. Instead, it is designed as an exploratory framework for comparing behavioral patterns across profiles and scenarios.
@@ -37,7 +38,7 @@ The simulation is **not** intended to estimate real-world phishing susceptibilit
 
 The agents used in this project are synthetic profiles generated from predefined archetypes. They are not real users and do not represent a statistically valid population sample.
 
-Therefore, the results should not be interpreted as direct measurements of real human behavior. The experiment is useful for observing relative differences between scenarios, user archetypes, and message features under controlled conditions.
+Therefore, the results should not be interpreted as direct measurements of real human behavior. The experiment is useful for observing relative differences between scenarios, user archetypes and message features under controlled conditions.
 
 The simulation distinguishes between several levels of interaction, including:
 
@@ -47,9 +48,28 @@ The simulation distinguishes between several levels of interaction, including:
 - reporting a message as phishing;
 - connecting a wallet or approving a transaction;
 - inserting credentials or seed phrases;
+- granting remote access to a device;
 - sending funds.
 
-This distinction is important because opening a link does not necessarily imply a full compromise. In real-world phishing campaigns, compromise usually occurs only after additional risky actions such as entering credentials, approving a malicious transaction, sharing a seed phrase, installing malware, or sending funds.
+This distinction is important because opening a link does not necessarily imply a full compromise. In real-world phishing campaigns, compromise usually occurs only after additional risky actions such as entering credentials, approving a malicious transaction, sharing a seed phrase, granting remote access, installing malware or sending funds.
+
+---
+
+## Case Study Extension
+
+In addition to generic phishing scenarios, the simulation includes scenarios inspired by the case study discussed in the thesis.
+
+These case-study scenarios model a targeted social engineering flow involving:
+
+- impersonation of security/support staff;
+- warning about suspicious account activity;
+- pressure to act quickly to protect funds;
+- requests to verify account or wallet security;
+- possible remote-assistance interaction.
+
+The goal is not to reproduce the exact communication used in the real attack, which is not publicly available in full. Instead, the objective is to model the main social-engineering patterns described by public sources and analyze how synthetic agents react to them.
+
+A dedicated high-value crypto holder archetype is included to simulate a profile inspired by the type of victim described in the case study. This profile must be interpreted as synthetic and hypothetical, not as a real person.
 
 ---
 
@@ -73,6 +93,7 @@ crypto-phishing-simulation-thesis/
 ├── analysis.ipynb
 ├── requirements.txt
 ├── README.md
+├── README_IT.md
 └── .gitignore
 ```
 
@@ -98,6 +119,8 @@ Contains the synthetic user archetypes used in the simulation. Each archetype de
 
 The simulation expands each archetype into multiple synthetic agents by applying small controlled variations.
 
+The repository also includes a case-study-specific archetype representing a hypothetical high-value crypto holder exposed to targeted social engineering.
+
 ### `scenarios/`
 
 Contains phishing and legitimate message templates. Each scenario includes:
@@ -108,7 +131,8 @@ Contains phishing and legitimate message templates. Each scenario includes:
 - textual content;
 - urgency level;
 - personalization level;
-- reward level.
+- reward or perceived benefit;
+- optional case-study marker.
 
 All scenarios are synthetic. Potentially suspicious URLs use safe `.test` domains to avoid referencing or promoting real malicious infrastructure.
 
@@ -132,7 +156,9 @@ Contains the data analysis workflow used to process the generated CSV files. The
 - loose failure rate;
 - reporting rate;
 - verification rate;
-- false positive rate on legitimate messages.
+- remote access rate;
+- false positive rate on legitimate messages;
+- case-study-specific metrics.
 
 It also generates summary tables and plots for thesis discussion.
 
@@ -232,6 +258,7 @@ IGNORA
 APRE_LINK
 COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
 INSERISCE_CREDENZIALI_O_SEED
+CONCEDE_ACCESSO_REMOTO
 INVIA_FONDI
 VERIFICA_TRAMITE_CANALE_UFFICIALE
 SEGNALA_COME_PHISHING
@@ -243,9 +270,10 @@ PARSE_ERROR
 | `IGNORA` | The agent ignores the message. |
 | `APRE_LINK` | The agent opens the link but does not perform further risky actions. |
 | `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | The agent connects a wallet or approves a potentially malicious transaction. |
-| `INSERISCE_CREDENZIALI_O_SEED` | The agent enters credentials, OTP codes, seed phrases, or other sensitive information. |
+| `INSERISCE_CREDENZIALI_O_SEED` | The agent enters credentials, OTP codes, seed phrases or other sensitive information. |
+| `CONCEDE_ACCESSO_REMOTO` | The agent installs, launches or grants remote access/screen sharing that could expose the device to the attacker. |
 | `INVIA_FONDI` | The agent sends cryptocurrency to an address indicated by the message. |
-| `VERIFICA_TRAMITE_CANALE_UFFICIALE` | The agent verifies the message through an official website, app, support channel, or trusted expert. |
+| `VERIFICA_TRAMITE_CANALE_UFFICIALE` | The agent verifies the message through an official website, app, support channel or trusted expert. |
 | `SEGNALA_COME_PHISHING` | The agent reports or classifies the message as phishing. |
 | `PARSE_ERROR` | The model response could not be parsed or normalized correctly. |
 
@@ -275,7 +303,7 @@ Run → Run All Cells
 
 The notebook automatically loads the most recent CSV file from the `results/` directory and produces summary statistics and plots.
 
-Generated plots are saved locally under:
+Generated plots and tables are saved locally under:
 
 ```text
 results/plots/
@@ -285,13 +313,17 @@ results/plots/
 
 ## Metrics
 
-The analysis separates phishing messages from legitimate messages.
+The analysis separates phishing messages from legitimate messages and also separates generic phishing scenarios from case-study-inspired scenarios.
 
 For phishing scenarios, the main metrics are:
 
 | Metric | Description |
 |---|---|
 | Click rate | Percentage of phishing messages where the agent opened the link. |
+| Wallet/transaction approval rate | Percentage of phishing messages where the agent connected a wallet or approved a transaction. |
+| Credential/seed disclosure rate | Percentage of phishing messages where the agent entered credentials, OTP codes or seed phrases. |
+| Remote access rate | Percentage of phishing messages where the agent granted remote access or screen sharing. |
+| Fund transfer rate | Percentage of phishing messages where the agent sent funds. |
 | Strict compromise rate | Percentage of phishing messages where the agent performed a clearly compromising action. |
 | Loose failure rate | Percentage of phishing messages where the agent performed any risky interaction. |
 | Reporting rate | Percentage of phishing messages reported as phishing. |
@@ -316,7 +348,7 @@ RANDOM_SEED = 42
 
 The model generation parameters are also configured in the simulation script.
 
-Each CSV file stores the `run_id` and the model name, making it easier to compare different runs, prompts, or models.
+Each CSV file stores the `run_id` and the model name, making it easier to compare different runs, prompts or models.
 
 ---
 
@@ -335,7 +367,7 @@ This repository does not include or support:
 
 All phishing messages are synthetic and used only in a local, controlled simulation environment.
 
-The purpose of the project is to support cybersecurity education, awareness, and academic research.
+The purpose of the project is to support cybersecurity education, awareness and academic research.
 
 ---
 
@@ -344,19 +376,22 @@ The purpose of the project is to support cybersecurity education, awareness, and
 This project has several important limitations:
 
 1. **Synthetic agents are not real users.**  
-   Their behavior is generated by an LLM and depends on prompt design, model behavior, and simulation parameters.
+   Their behavior is generated by an LLM and depends on prompt design, model behavior and simulation parameters.
 
 2. **The results are not statistically representative.**  
    The synthetic profiles do not constitute a population sample and should not be interpreted as real-world phishing susceptibility rates.
 
 3. **LLMs may show safety bias.**  
-   The model may recognize obvious phishing indicators more easily than average users, especially in scenarios involving seed phrases or credentials.
+   The model may recognize obvious phishing indicators more easily than average users, especially in scenarios involving seed phrases, credentials or remote access.
 
 4. **The simulation is exploratory.**  
-   Its value lies in comparing scenarios, profiles, and behavioral patterns, not in estimating exact real-world percentages.
+   Its value lies in comparing scenarios, profiles and behavioral patterns, not in estimating exact real-world percentages.
 
 5. **Prompt design influences results.**  
-   Different wording, models, temperatures, or action definitions may produce different outcomes.
+   Different wording, models, temperatures or action definitions may produce different outcomes.
+
+6. **Case-study scenarios are modeled, not reconstructed verbatim.**  
+   The case-study scenarios are inspired by public descriptions of the attack but do not reproduce the original attacker-victim communications.
 
 These limitations are explicitly considered in the thesis discussion.
 
@@ -374,4 +409,4 @@ The experimental framework is intended to complement the theoretical analysis of
 
 This project is provided for educational and research purposes only.
 
-The author does not endorse, enable, or encourage phishing, fraud, credential theft, or any form of unauthorized access. All scenarios are synthetic and designed exclusively for safe academic experimentation.
+The author does not endorse, enable or encourage phishing, fraud, credential theft or any form of unauthorized access. All scenarios are synthetic and designed exclusively for safe academic experimentation.

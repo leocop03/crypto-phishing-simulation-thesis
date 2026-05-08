@@ -15,7 +15,7 @@ La tesi analizza il rapporto tra criptovalute e attacchi di ingegneria sociale, 
 
 Sebbene i sistemi blockchain siano spesso robusti dal punto di vista tecnico, molti attacchi di successo non violano direttamente il protocollo sottostante. Al contrario, sfruttano utenti, canali di comunicazione, relazioni di fiducia, scarsa consapevolezza della sicurezza ed errori operativi.
 
-Questo repository supporta la parte sperimentale della tesi, fornendo un framework riproducibile per simulare la reazione di utenti sintetici a diversi scenari di phishing.
+Questo repository supporta la parte sperimentale della tesi, fornendo un framework riproducibile per simulare la reazione di utenti sintetici a diversi scenari di phishing, inclusi scenari generici e scenari ispirati al caso studio analizzato nella tesi.
 
 ---
 
@@ -24,9 +24,10 @@ Questo repository supporta la parte sperimentale della tesi, fornendo un framewo
 L'obiettivo principale del progetto è costruire un ambiente di simulazione controllato per studiare:
 
 - come profili utente sintetici differenti reagiscono a tentativi di phishing;
-- come caratteristiche del messaggio, quali urgenza, promessa di ricompensa, impersonificazione o linguaggio tecnico, influenzano il comportamento;
+- come caratteristiche del messaggio, quali urgenza, promessa di ricompensa, impersonificazione, linguaggio tecnico o rischio percepito per l'account, influenzano il comportamento;
 - come formazione sulla sicurezza ed esperienza nel mondo crypto incidono sulle decisioni simulate;
 - come le risposte ai messaggi di phishing differiscono dalle risposte ai messaggi legittimi;
+- come attacchi mirati basati su ingegneria sociale, assistenza remota e pretesti di sicurezza possano influenzare detentori di criptovalute ad alto valore;
 - come agenti basati su LLM possano essere usati come strumento esplorativo nella ricerca comportamentale in cybersecurity.
 
 La simulazione **non** ha lo scopo di stimare il tasso reale di vulnerabilità degli utenti al phishing. È invece pensata come framework esplorativo per confrontare pattern comportamentali tra profili e scenari diversi.
@@ -47,9 +48,28 @@ La simulazione distingue diversi livelli di interazione, tra cui:
 - segnalare un messaggio come phishing;
 - collegare un wallet o approvare una transazione;
 - inserire credenziali o seed phrase;
+- concedere accesso remoto al dispositivo;
 - inviare fondi.
 
-Questa distinzione è importante perché aprire un link non implica necessariamente una compromissione completa. Nelle campagne di phishing reali, la compromissione avviene di solito solo dopo ulteriori azioni rischiose, come l'inserimento di credenziali, l'approvazione di una transazione malevola, la condivisione di una seed phrase, l'installazione di malware o l'invio di fondi.
+Questa distinzione è importante perché aprire un link non implica necessariamente una compromissione completa. Nelle campagne di phishing reali, la compromissione avviene di solito solo dopo ulteriori azioni rischiose, come l'inserimento di credenziali, l'approvazione di una transazione malevola, la condivisione di una seed phrase, la concessione di accesso remoto, l'installazione di malware o l'invio di fondi.
+
+---
+
+## Estensione sul caso studio
+
+Oltre agli scenari generici di phishing, la simulazione include scenari ispirati al caso studio discusso nella tesi.
+
+Questi scenari modellano un flusso di social engineering mirato basato su:
+
+- impersonificazione di personale di sicurezza o supporto;
+- avviso relativo a presunte attività sospette sull'account;
+- pressione temporale per proteggere i fondi;
+- richiesta di verifica della sicurezza dell'account o del wallet;
+- possibile interazione tramite assistenza remota.
+
+L'obiettivo non è riprodurre esattamente la comunicazione usata nell'attacco reale, che non è pubblicamente disponibile in forma completa. Lo scopo è invece modellare i principali pattern di ingegneria sociale descritti da fonti pubbliche e analizzare come agenti sintetici reagiscono a tali dinamiche.
+
+È incluso anche un archetipo di detentore crypto ad alto valore, ispirato in modo ipotetico al tipo di vittima descritto nel caso studio. Tale profilo deve essere interpretato come sintetico e ipotetico, non come una persona reale.
 
 ---
 
@@ -73,6 +93,7 @@ crypto-phishing-simulation-thesis/
 ├── analysis.ipynb
 ├── requirements.txt
 ├── README.md
+├── README_IT.md
 └── .gitignore
 ```
 
@@ -98,6 +119,8 @@ Contiene gli archetipi utente sintetici usati nella simulazione. Ogni archetipo 
 
 La simulazione espande ciascun archetipo in più agenti sintetici applicando piccole variazioni controllate.
 
+Il repository include anche un archetipo specifico per il caso studio, che rappresenta un ipotetico detentore crypto ad alto valore esposto a social engineering mirato.
+
 ### `scenarios/`
 
 Contiene template di messaggi di phishing e messaggi legittimi. Ogni scenario include:
@@ -108,7 +131,8 @@ Contiene template di messaggi di phishing e messaggi legittimi. Ogni scenario in
 - contenuto testuale;
 - livello di urgenza;
 - livello di personalizzazione;
-- livello di ricompensa promessa.
+- ricompensa o beneficio percepito;
+- eventuale indicatore di scenario legato al caso studio.
 
 Tutti gli scenari sono sintetici. Gli URL potenzialmente sospetti usano domini sicuri `.test`, in modo da non fare riferimento a infrastrutture malevole reali.
 
@@ -132,7 +156,9 @@ Contiene il workflow di analisi dei dati generati. Il notebook calcola metriche 
 - tasso di fallimento ampio;
 - tasso di segnalazione;
 - tasso di verifica;
-- tasso di falsi positivi sui messaggi legittimi.
+- tasso di concessione di accesso remoto;
+- tasso di falsi positivi sui messaggi legittimi;
+- metriche specifiche per gli scenari ispirati al caso studio.
 
 Genera inoltre tabelle e grafici utilizzabili nella discussione della tesi.
 
@@ -232,6 +258,7 @@ IGNORA
 APRE_LINK
 COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
 INSERISCE_CREDENZIALI_O_SEED
+CONCEDE_ACCESSO_REMOTO
 INVIA_FONDI
 VERIFICA_TRAMITE_CANALE_UFFICIALE
 SEGNALA_COME_PHISHING
@@ -244,6 +271,7 @@ PARSE_ERROR
 | `APRE_LINK` | L'agente apre il link, ma non compie ulteriori azioni rischiose. |
 | `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | L'agente collega il wallet o approva una transazione potenzialmente malevola. |
 | `INSERISCE_CREDENZIALI_O_SEED` | L'agente inserisce credenziali, codici OTP, seed phrase o altre informazioni sensibili. |
+| `CONCEDE_ACCESSO_REMOTO` | L'agente installa, avvia o concede accesso remoto/condivisione schermo che potrebbe esporre il dispositivo all'attaccante. |
 | `INVIA_FONDI` | L'agente invia criptovalute all'indirizzo indicato dal messaggio. |
 | `VERIFICA_TRAMITE_CANALE_UFFICIALE` | L'agente verifica il messaggio tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta. |
 | `SEGNALA_COME_PHISHING` | L'agente segnala o classifica il messaggio come phishing. |
@@ -275,7 +303,7 @@ Run → Run All Cells
 
 Il notebook carica automaticamente il file CSV più recente dalla cartella `results/` e produce statistiche e grafici riassuntivi.
 
-I grafici generati vengono salvati localmente in:
+I grafici e le tabelle generati vengono salvati localmente in:
 
 ```text
 results/plots/
@@ -285,13 +313,17 @@ results/plots/
 
 ## Metriche
 
-L'analisi separa i messaggi di phishing dai messaggi legittimi.
+L'analisi separa i messaggi di phishing dai messaggi legittimi e distingue inoltre gli scenari generici dagli scenari ispirati al caso studio.
 
 Per gli scenari di phishing, le metriche principali sono:
 
 | Metrica | Descrizione |
 |---|---|
 | Click rate | Percentuale di messaggi di phishing in cui l'agente apre il link. |
+| Wallet/transaction approval rate | Percentuale di messaggi di phishing in cui l'agente collega il wallet o approva una transazione. |
+| Credential/seed disclosure rate | Percentuale di messaggi di phishing in cui l'agente inserisce credenziali, OTP o seed phrase. |
+| Remote access rate | Percentuale di messaggi di phishing in cui l'agente concede accesso remoto o condivisione schermo. |
+| Fund transfer rate | Percentuale di messaggi di phishing in cui l'agente invia fondi. |
 | Strict compromise rate | Percentuale di messaggi di phishing in cui l'agente compie un'azione chiaramente compromettente. |
 | Loose failure rate | Percentuale di messaggi di phishing in cui l'agente compie una qualunque interazione rischiosa. |
 | Reporting rate | Percentuale di messaggi di phishing segnalati come phishing. |
@@ -350,13 +382,16 @@ Il progetto presenta alcuni limiti importanti:
    I profili sintetici non costituiscono un campione della popolazione e non devono essere interpretati come tassi reali di vulnerabilità al phishing.
 
 3. **Gli LLM possono mostrare bias di sicurezza.**  
-   Il modello può riconoscere indicatori evidenti di phishing più facilmente di un utente medio, soprattutto in scenari che coinvolgono seed phrase o credenziali.
+   Il modello può riconoscere indicatori evidenti di phishing più facilmente di un utente medio, soprattutto in scenari che coinvolgono seed phrase, credenziali o accesso remoto.
 
 4. **La simulazione è esplorativa.**  
    Il valore dell'esperimento sta nel confronto tra scenari, profili e pattern comportamentali, non nella stima di percentuali reali.
 
 5. **Il prompt influenza i risultati.**  
    Formulazioni diverse, modelli diversi, temperature diverse o definizioni diverse delle azioni possono produrre esiti differenti.
+
+6. **Gli scenari del caso studio sono modellati, non ricostruiti parola per parola.**  
+   Gli scenari ispirati al caso studio derivano da descrizioni pubbliche dell'attacco, ma non riproducono le comunicazioni originali tra attaccanti e vittima.
 
 Questi limiti devono essere considerati esplicitamente nella discussione della tesi.
 
