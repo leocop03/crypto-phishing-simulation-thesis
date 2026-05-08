@@ -5,6 +5,80 @@ from datetime import datetime
 import requests
 import random
 
+TRAIT_SCALE = [
+    "molto_bassa",
+    "bassa",
+    "media",
+    "alta",
+    "molto_alta",
+]
+
+SECURITY_TRAINING_SCALE = [
+    "no",
+    "minima",
+    "basilare",
+    "autodidatta",
+    "si",
+]
+
+BACKGROUND_VARIANTS = [
+    "ha poco tempo e legge i messaggi rapidamente",
+    "ha ricevuto da poco un avviso di sicurezza reale",
+    "si affida spesso a notifiche e messaggi ricevuti sul telefono",
+    "prima di agire tende a cercare conferme online",
+    "usa spesso servizi crypto ma non controlla sempre i dettagli",
+    "ha gia visto tentativi di phishing simili in passato",
+    "sta gestendo molte attivita contemporaneamente",
+    "ha bisogno di risolvere velocemente problemi legati agli account",
+    "preferisce chiedere conferma a una persona piu esperta",
+    "si fida molto dei messaggi che sembrano provenire da brand noti",
+]
+
+VARIANT_PROFILES = [
+    {
+        "impulsiveness": 1,
+        "trust_in_brands": 1,
+        "attention_level": -1,
+        "risk_aversion": -1,
+        "security_training": 0,
+    },
+    {
+        "impulsiveness": -1,
+        "trust_in_brands": -1,
+        "attention_level": 1,
+        "risk_aversion": 1,
+        "security_training": 1,
+    },
+    {
+        "impulsiveness": 0,
+        "trust_in_brands": 1,
+        "attention_level": 0,
+        "risk_aversion": 0,
+        "security_training": 0,
+    },
+    {
+        "impulsiveness": 1,
+        "trust_in_brands": 0,
+        "attention_level": -1,
+        "risk_aversion": 0,
+        "security_training": -1,
+    },
+    {
+        "impulsiveness": -1,
+        "trust_in_brands": 0,
+        "attention_level": 1,
+        "risk_aversion": 0,
+        "security_training": 0,
+    },
+    {
+        "impulsiveness": 0,
+        "trust_in_brands": -1,
+        "attention_level": 0,
+        "risk_aversion": 1,
+        "security_training": 0,
+    },
+]
+
 ALLOWED_CHOICES = {
     "IGNORA",
     "APRE_LINK",
@@ -58,7 +132,7 @@ CHOICE_MAPPING = {
 
 # ------- CONFIGURAZIONE -------
 
-OLLAMA_MODEL = "llama3"  # cambia se usi un modello diverso
+OLLAMA_MODEL = "llama3.2:3b"
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 ARCHETYPES_PATH = os.path.join("agents", "profiles_archetypes.json")
@@ -66,7 +140,7 @@ MESSAGES_PATH = os.path.join("scenarios", "messages.json")
 
 RESULTS_DIR = "results"
 INSTANCES_PER_ARCHETYPE = 6  # 16 archetipi * 6 = 96 agenti
-RANDOM_SEED = 42
+RANDOM_SEED = 42 # genera casualità nello stesso ordine
 
 
 # ------- FUNZIONI DI CARICAMENTO -------
@@ -76,16 +150,35 @@ def load_archetypes(path: str):
         return json.load(f)
 
 
+def shift_ordered_value(value: str, scale: list[str], shift: int) -> str:
+    if value not in scale:
+        return value
+
+    shift = min(max(shift, -1), 1)
+    idx = scale.index(value)
+    shifted_idx = min(max(idx + shift, 0), len(scale) - 1)
+    return scale[shifted_idx]
+
+
 def expand_profiles(archetypes, instances_per_archetype=INSTANCES_PER_ARCHETYPE):
     """
     Clona ogni archetipo in più agenti:
     - id: aggiunge suffisso _1, _2, ...
     - età: piccola variazione random +/- 2 anni (clampata nella stessa fascia d'età)
+    - tratti comportamentali: variazioni controllate su attenzione, impulsivita, fiducia e rischio
+    - formazione/consapevolezza: possibile variazione di un livello
+    - background: dettaglio situazionale casuale
     """
     profiles = []
 
     for arch in archetypes:
         base_age = arch.get("age", 30)
+        base_traits = arch.get("traits", {})
+        if instances_per_archetype <= len(BACKGROUND_VARIANTS):
+            background_variants = random.sample(BACKGROUND_VARIANTS, instances_per_archetype)
+        else:
+            background_variants = random.choices(BACKGROUND_VARIANTS, k=instances_per_archetype)
+
         for i in range(instances_per_archetype):
             profile = json.loads(json.dumps(arch))  # deep copy
             profile["id"] = f"{arch['id']}_{i+1}"
@@ -94,6 +187,40 @@ def expand_profiles(archetypes, instances_per_archetype=INSTANCES_PER_ARCHETYPE)
             jitter = random.randint(-2, 2)
             new_age = max(15, base_age + jitter)
             profile["age"] = new_age
+
+            variant = VARIANT_PROFILES[i % len(VARIANT_PROFILES)]
+            random_noise = {
+                "impulsiveness": random.choice([-1, 0, 0, 1]),
+                "trust_in_brands": random.choice([-1, 0, 0, 1]),
+                "tech_savvy": random.choice([-1, 0, 0, 1]),
+                "attention_level": random.choice([-1, 0, 0, 1]),
+                "risk_aversion": random.choice([-1, 0, 0, 1]),
+                "security_training": random.choice([-1, 0, 0, 0, 1]),
+            }
+
+            traits = profile.setdefault("traits", {})
+            for trait_name in [
+                "impulsiveness",
+                "trust_in_brands",
+                "tech_savvy",
+                "attention_level",
+                "risk_aversion",
+            ]:
+                shift = variant.get(trait_name, 0) + random_noise.get(trait_name, 0)
+                traits[trait_name] = shift_ordered_value(
+                    base_traits.get(trait_name, traits.get(trait_name)),
+                    TRAIT_SCALE,
+                    shift,
+                )
+
+            training_shift = variant.get("security_training", 0) + random_noise.get("security_training", 0)
+            profile["security_training"] = shift_ordered_value(
+                arch.get("security_training"),
+                SECURITY_TRAINING_SCALE,
+                training_shift,
+            )
+
+            profile["background"] = background_variants[i]
 
             profiles.append(profile)
 
@@ -123,6 +250,7 @@ Profilo:
 - Esperienza con le criptovalute: {agent_profile.get('crypto_experience')}
 - Formazione sulla sicurezza: {agent_profile.get('security_training')}
 - Contesto d'uso: {agent_profile.get('environment')}
+- Background individuale: {agent_profile.get('background')}
 - Tratti: impulsività={traits.get('impulsiveness')}, fiducia nei brand={traits.get('trust_in_brands')}, competenza tecnologica={traits.get('tech_savvy')}, livello di attenzione={traits.get('attention_level')}, avversione al rischio={traits.get('risk_aversion')}
 
 Ricevi il seguente messaggio ({message.get('channel')}), relativo al mondo delle criptovalute:
@@ -150,14 +278,6 @@ Nota:
 Agisci coerentemente con il profilo assegnato. Considera esperienza, attenzione, impulsività, fiducia, formazione e contesto d'uso.
 Scegli l'azione finale che l'utente compirebbe realisticamente dopo aver letto e valutato il messaggio.
 Non scegliere automaticamente l'azione più rischiosa. L'agente deve fermarsi al punto in cui, in base al proprio profilo, diventerebbe sospettoso, chiederebbe conferma, ignorerebbe il messaggio o procederebbe.
-Se il messaggio non è rilevante per il profilo, se l'utente non riconosce il servizio, se è occupato, disinteressato o non ha un motivo concreto per interagire, può scegliere IGNORA.
-Se l'utente aprirebbe il link solo per controllare ma poi non inserirebbe dati, non collegherebbe wallet e non approverebbe transazioni, scegli APRE_LINK.
-Se l'utente aprirebbe il link e poi collegherebbe il wallet o approverebbe una richiesta on-chain, scegli COLLEGA_WALLET_O_APPROVA_TRANSAZIONE.
-Se l'utente inserirebbe credenziali, codici OTP o seed phrase, scegli INSERISCE_CREDENZIALI_O_SEED.
-Se l'utente invierebbe criptovalute all'indirizzo indicato, scegli INVIA_FONDI.
-Se l'utente non procede subito ma controlla tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta, scegli VERIFICA_TRAMITE_CANALE_UFFICIALE.
-Se l'utente riconosce chiaramente il tentativo di phishing e lo segnala o lo classifica come malevolo, scegli SEGNALA_COME_PHISHING.
-In molti casi un utente reale può semplicemente ignorare un messaggio senza analizzarlo a fondo. Usa IGNORA quando questa è la reazione più plausibile per il profilo.
 
 Rispondi in JSON esattamente nel formato:
 {{
@@ -183,7 +303,7 @@ def query_llm(prompt: str) -> dict:
                 "stream": False,
                 "format": "json",
                 "options": {
-                    "temperature": 0.4,
+                    "temperature": 0.4, # più è alta più è creativo ma incoerente
                     "seed": RANDOM_SEED
                 }
             },
@@ -258,6 +378,12 @@ def main():
             "crypto_experience",
             "security_training",
             "environment",
+            "background",
+            "impulsiveness",
+            "trust_in_brands",
+            "tech_savvy",
+            "attention_level",
+            "risk_aversion",
             "message_id",
             "message_type",
             "channel",
@@ -285,6 +411,7 @@ def main():
                 resp = query_llm(prompt)
 
                 feats = message.get("features", {})
+                traits = profile.get("traits", {})
 
                 writer.writerow([
                     run_id,
@@ -296,6 +423,12 @@ def main():
                     profile.get("crypto_experience"),
                     profile.get("security_training"),
                     profile.get("environment"),
+                    profile.get("background"),
+                    traits.get("impulsiveness"),
+                    traits.get("trust_in_brands"),
+                    traits.get("tech_savvy"),
+                    traits.get("attention_level"),
+                    traits.get("risk_aversion"),
                     message.get("id"),
                     message.get("type"),
                     message.get("channel"),

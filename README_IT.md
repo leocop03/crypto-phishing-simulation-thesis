@@ -1,79 +1,73 @@
-# Simulazione di Phishing Crypto per Tesi
+# Simulazione di Phishing Crypto per Tesi di Cybersecurity
 
-Questo repository contiene la componente sperimentale di una tesi triennale in Cybersecurity dedicata al phishing, all'ingegneria sociale e alle frodi legate al mondo delle criptovalute.
+## Panoramica
 
-Il progetto implementa una **simulazione agent-based controllata**, nella quale profili utente sintetici interagiscono con messaggi di phishing e messaggi legittimi relativi all'ecosistema crypto. L'obiettivo è analizzare come caratteristiche dell'utente, proprietà del messaggio e livello di consapevolezza sulla sicurezza possano influenzare comportamenti rischiosi o difensivi.
+Questo repository contiene la parte sperimentale di una tesi triennale in Cybersecurity dedicata al phishing nel mondo delle criptovalute, all’ingegneria sociale e agli attacchi che sfruttano il comportamento umano.
 
-> **Importante:** questo progetto è destinato esclusivamente a finalità didattiche, accademiche e di ricerca.  
-> Non esegue campagne di phishing reali, non raccoglie credenziali e non interagisce con utenti reali o infrastrutture malevole reali.
+Il progetto implementa una simulazione controllata in cui profili utente sintetici interagiscono con messaggi di phishing e messaggi legittimi legati all’ecosistema crypto. Le decisioni degli agenti vengono generate tramite un Large Language Model eseguito localmente con Ollama.
 
----
-
-## Contesto della tesi
-
-La tesi analizza il rapporto tra criptovalute e attacchi di ingegneria sociale, con particolare attenzione al modo in cui vulnerabilità umane e comportamentali possono essere sfruttate in ambienti blockchain e crypto.
-
-Sebbene i sistemi blockchain siano spesso robusti dal punto di vista tecnico, molti attacchi di successo non violano direttamente il protocollo sottostante. Al contrario, sfruttano utenti, canali di comunicazione, relazioni di fiducia, scarsa consapevolezza della sicurezza ed errori operativi.
-
-Questo repository supporta la parte sperimentale della tesi, fornendo un framework riproducibile per simulare la reazione di utenti sintetici a diversi scenari di phishing, inclusi scenari generici e scenari ispirati al caso studio analizzato nella tesi.
+L’obiettivo non è creare strumenti offensivi o infrastrutture realistiche di phishing, ma studiare in modo sperimentale come diverse caratteristiche dell’utente e del messaggio possano influenzare comportamenti rischiosi o prudenti.
 
 ---
 
-## Obiettivo della ricerca
+## Disclaimer importante
 
-L'obiettivo principale del progetto è costruire un ambiente di simulazione controllato per studiare:
+Questo progetto è stato sviluppato esclusivamente per:
 
-- come profili utente sintetici differenti reagiscono a tentativi di phishing;
-- come caratteristiche del messaggio, quali urgenza, promessa di ricompensa, impersonificazione, linguaggio tecnico o rischio percepito per l'account, influenzano il comportamento;
-- come formazione sulla sicurezza ed esperienza nel mondo crypto incidono sulle decisioni simulate;
-- come le risposte ai messaggi di phishing differiscono dalle risposte ai messaggi legittimi;
-- come attacchi mirati basati su ingegneria sociale, assistenza remota e pretesti di sicurezza possano influenzare detentori di criptovalute ad alto valore;
-- come agenti basati su LLM possano essere usati come strumento esplorativo nella ricerca comportamentale in cybersecurity.
+- ricerca accademica;
+- studio del social engineering;
+- analisi comportamentale;
+- sensibilizzazione sul phishing.
 
-La simulazione **non** ha lo scopo di stimare il tasso reale di vulnerabilità degli utenti al phishing. È invece pensata come framework esplorativo per confrontare pattern comportamentali tra profili e scenari diversi.
+Il repository:
 
----
+- NON esegue phishing reale;
+- NON raccoglie credenziali;
+- NON interagisce con utenti reali;
+- NON utilizza wallet reali;
+- NON usa infrastrutture malevole reali;
+- NON automatizza attacchi.
 
-## Nota metodologica
-
-Gli agenti usati in questo progetto sono profili sintetici generati a partire da archetipi predefiniti. Non sono utenti reali e non rappresentano un campione statisticamente valido della popolazione.
-
-Di conseguenza, i risultati non devono essere interpretati come misurazioni dirette del comportamento umano reale. L'esperimento è utile per osservare differenze relative tra scenari, archetipi utente e caratteristiche dei messaggi in condizioni controllate.
-
-La simulazione distingue diversi livelli di interazione, tra cui:
-
-- ignorare un messaggio;
-- aprire un link;
-- verificare il messaggio tramite un canale ufficiale;
-- segnalare un messaggio come phishing;
-- collegare un wallet o approvare una transazione;
-- inserire credenziali o seed phrase;
-- concedere accesso remoto al dispositivo;
-- inviare fondi.
-
-Questa distinzione è importante perché aprire un link non implica necessariamente una compromissione completa. Nelle campagne di phishing reali, la compromissione avviene di solito solo dopo ulteriori azioni rischiose, come l'inserimento di credenziali, l'approvazione di una transazione malevola, la condivisione di una seed phrase, la concessione di accesso remoto, l'installazione di malware o l'invio di fondi.
+Tutti gli scenari sono sintetici e confinati in un ambiente locale e controllato.
 
 ---
 
-## Estensione sul caso studio
+# Contesto della tesi
 
-Oltre agli scenari generici di phishing, la simulazione include scenari ispirati al caso studio discusso nella tesi.
+La tesi analizza il rapporto tra criptovalute e ingegneria sociale, con particolare attenzione al modo in cui gli attaccanti sfruttano:
 
-Questi scenari modellano un flusso di social engineering mirato basato su:
+- urgenza;
+- paura;
+- fiducia;
+- sovraccarico cognitivo;
+- impersonificazione;
+- errori operativi;
+- assistenza tecnica fasulla;
+- procedure di recupero account;
+- accesso remoto.
 
-- impersonificazione di personale di sicurezza o supporto;
-- avviso relativo a presunte attività sospette sull'account;
-- pressione temporale per proteggere i fondi;
-- richiesta di verifica della sicurezza dell'account o del wallet;
-- possibile interazione tramite assistenza remota.
+Molti attacchi crypto di successo non violano direttamente blockchain o smart contract. Spesso il vero punto debole è l’utente.
 
-L'obiettivo non è riprodurre esattamente la comunicazione usata nell'attacco reale, che non è pubblicamente disponibile in forma completa. Lo scopo è invece modellare i principali pattern di ingegneria sociale descritti da fonti pubbliche e analizzare come agenti sintetici reagiscono a tali dinamiche.
-
-È incluso anche un archetipo di detentore crypto ad alto valore, ispirato in modo ipotetico al tipo di vittima descritto nel caso studio. Tale profilo deve essere interpretato come sintetico e ipotetico, non come una persona reale.
+Questo repository nasce per simulare queste dinamiche in modo riproducibile.
 
 ---
 
-## Struttura del repository
+# Obiettivi dell’esperimento
+
+La simulazione serve a osservare:
+
+- come profili diversi reagiscono a tentativi di phishing;
+- quanto urgenza e personalizzazione influenzino il comportamento;
+- come esperienza crypto e formazione sulla sicurezza cambino le decisioni;
+- come gli utenti distinguano messaggi legittimi e malevoli;
+- come attacchi mirati possano colpire utenti ad alto valore;
+- come gli LLM possano essere usati in simulazioni comportamentali in ambito cybersecurity.
+
+L’esperimento NON ha valore statistico sulla popolazione reale. Serve soprattutto a confrontare scenari e pattern comportamentali.
+
+---
+
+# Struttura del repository
 
 ```text
 crypto-phishing-simulation-thesis/
@@ -88,7 +82,7 @@ crypto-phishing-simulation-thesis/
 │   └── run_simulation.py
 │
 ├── results/
-│   └── generata localmente, ignorata da Git
+│   └── generata localmente (ignorata da Git)
 │
 ├── analysis.ipynb
 ├── requirements.txt
@@ -99,159 +93,310 @@ crypto-phishing-simulation-thesis/
 
 ---
 
-## Componenti del progetto
+# Componenti principali
 
-### `agents/`
+## `agents/`
 
-Contiene gli archetipi utente sintetici usati nella simulazione. Ogni archetipo descrive un profilo attraverso variabili come:
+Contiene gli archetipi sintetici usati nella simulazione.
+
+Ogni archetipo definisce:
 
 - età;
-- fascia d'età;
+- fascia d’età;
 - ruolo;
 - esperienza con le criptovalute;
 - formazione sulla sicurezza;
-- ambiente d'uso tipico;
-- impulsività;
-- fiducia nei brand;
-- competenza tecnica;
-- livello di attenzione;
-- avversione al rischio.
+- ambiente d’uso;
+- tratti comportamentali.
 
-La simulazione espande ciascun archetipo in più agenti sintetici applicando piccole variazioni controllate.
+Ogni archetipo viene poi espanso in più istanze sintetiche con piccole variazioni controllate.
 
-Il repository include anche un archetipo specifico per il caso studio, che rappresenta un ipotetico detentore crypto ad alto valore esposto a social engineering mirato.
+---
 
-### `scenarios/`
+## `scenarios/`
 
-Contiene template di messaggi di phishing e messaggi legittimi. Ogni scenario include:
+Contiene gli scenari dei messaggi.
 
-- identificativo del messaggio;
-- tipo di messaggio;
+Ogni scenario include:
+
+- ID del messaggio;
+- tipo (`phishing` o `legittimo`);
 - canale di comunicazione;
-- contenuto testuale;
+- testo;
 - livello di urgenza;
 - livello di personalizzazione;
-- ricompensa o beneficio percepito;
-- eventuale indicatore di scenario legato al caso studio.
+- beneficio percepito;
+- eventuale collegamento al caso studio.
 
-Tutti gli scenari sono sintetici. Gli URL potenzialmente sospetti usano domini sicuri `.test`, in modo da non fare riferimento a infrastrutture malevole reali.
-
-### `simulations/`
-
-Contiene lo script principale della simulazione. Lo script:
-
-1. carica gli archetipi utente;
-2. li espande in agenti sintetici;
-3. carica gli scenari;
-4. invia ogni coppia agente-messaggio a un LLM locale tramite Ollama;
-5. effettua parsing e normalizzazione della risposta del modello;
-6. salva i risultati in un file CSV.
-
-### `analysis.ipynb`
-
-Contiene il workflow di analisi dei dati generati. Il notebook calcola metriche come:
-
-- tasso di apertura dei link nei messaggi di phishing;
-- tasso di compromissione stretta;
-- tasso di fallimento ampio;
-- tasso di segnalazione;
-- tasso di verifica;
-- tasso di concessione di accesso remoto;
-- tasso di falsi positivi sui messaggi legittimi;
-- metriche specifiche per gli scenari ispirati al caso studio.
-
-Genera inoltre tabelle e grafici utilizzabili nella discussione della tesi.
+Gli URL sospetti usano domini `.test` sicuri.
 
 ---
 
-## Requisiti
+## `simulations/`
 
-Il progetto richiede Python 3.10 o superiore.
+Contiene il motore della simulazione.
 
-Installa le dipendenze Python con:
+Lo script:
 
-```bash
-pip install -r requirements.txt
-```
+1. carica gli archetipi;
+2. genera gli agenti sintetici;
+3. carica gli scenari;
+4. invia i prompt al modello locale tramite Ollama;
+5. normalizza le risposte;
+6. salva tutto in CSV.
 
-Le dipendenze attuali sono:
+---
+
+## `analysis.ipynb`
+
+Contiene il notebook di analisi.
+
+Il notebook:
+- carica automaticamente l’ultimo CSV;
+- separa phishing e messaggi legittimi;
+- analizza i background individuali;
+- analizza i tratti comportamentali;
+- calcola metriche;
+- genera grafici e tabelle;
+- produce statistiche dedicate agli scenari ispirati al caso studio.
+
+---
+
+# Generazione degli agenti sintetici
+
+Ogni archetipo viene espanso in più istanze.
+
+Esempio:
 
 ```text
-requests
-pandas
-matplotlib
-seaborn
-jupyter
+teen_gamer_lowsec_1
+teen_gamer_lowsec_2
+teen_gamer_lowsec_3
 ```
 
-La simulazione richiede inoltre un'installazione locale di Ollama.
+Tutti condividono la stessa identità generale, ma differiscono leggermente in:
+- impulsività;
+- attenzione;
+- fiducia nei brand;
+- competenza tecnica;
+- prudenza;
+- contesto personale.
+
+Questo evita che gli agenti siano stereotipi troppo rigidi.
 
 ---
 
-## Configurazione LLM con Ollama
+# Variabili comportamentali
 
-Installa Ollama da:
+La simulazione modella diverse dimensioni psicologiche e operative.
+
+---
+
+## `impulsiveness`
+
+Indica quanto velocemente l’agente tende ad agire senza riflettere troppo.
+
+Valori possibili:
+
+```text
+molto_bassa
+bassa
+media
+alta
+molto_alta
+```
+
+---
+
+## `trust_in_brands`
+
+Indica quanto facilmente l’agente si fida di messaggi che sembrano provenire da brand noti, exchange o servizi conosciuti.
+
+---
+
+## `tech_savvy`
+
+Indica il livello di competenza tecnica.
+
+NON significa automaticamente essere esperti di sicurezza.
+
+---
+
+## `attention_level`
+
+Rappresenta quanto attentamente l’agente controlla dettagli, URL, mittenti e anomalie.
+
+---
+
+## `risk_aversion`
+
+Indica quanto l’agente tende a evitare rischi finanziari o operativi.
+
+---
+
+# Background individuali
+
+Ogni agente riceve anche un piccolo contesto personale casuale.
+
+Esempi:
+- ha recentemente visto video divulgativi sul phishing;
+- è distratto dal multitasking;
+- ha già subito tentativi di phishing;
+- tende a fidarsi dei brand;
+- controlla spesso URL e mittenti;
+- ha fretta;
+- è incuriosito dagli airdrop crypto.
+
+Questi dettagli servono a rendere la simulazione meno rigida e più realistica.
+
+---
+
+# Parametri importanti della simulazione
+
+---
+
+## Seed fisso (`RANDOM_SEED`)
+
+```python
+RANDOM_SEED = 42
+```
+
+Il seed fisso serve a rendere la simulazione riproducibile.
+
+Controlla la casualità generata da Python:
+- variazioni di età;
+- assegnazione dei background;
+- modifiche dei tratti;
+- generazione delle istanze.
+
+Usare un seed fisso permette di confrontare più run in modo coerente.
+
+---
+
+## Temperature
+
+```python
+"temperature": 0.4
+```
+
+La temperature controlla quanto il modello sia:
+- prevedibile;
+- coerente;
+- variabile.
+
+Temperature basse:
+- rendono il modello più rigido.
+
+Temperature alte:
+- aumentano casualità e variabilità.
+
+Il valore `0.4` è stato scelto come compromesso tra coerenza e realismo comportamentale.
+
+---
+
+## Modalità JSON di Ollama
+
+La simulazione usa:
+
+```python
+"format": "json"
+```
+
+Questo obbliga il modello a produrre output JSON strutturati.
+
+Vantaggi:
+- meno errori di parsing;
+- CSV più puliti;
+- risposte più consistenti;
+- meno testo inutile.
+
+---
+
+# Configurazione LLM
+
+Il progetto usa Ollama come motore locale.
+
+Modello consigliato:
+
+```text
+llama3.2:3b
+```
+
+Inizialmente il progetto usava `llama3`, ma modelli più piccoli accelerano molto la simulazione mantenendo risultati sufficientemente coerenti.
+
+---
+
+# Installazione di Ollama
+
+Scarica Ollama da:
 
 ```text
 https://ollama.com
 ```
 
-Poi scarica il modello usato dalla simulazione:
+Scarica il modello:
 
 ```bash
-ollama pull llama3
+ollama pull llama3.2:3b
 ```
 
-Verifica che il modello funzioni:
+Verifica che funzioni:
 
 ```bash
-ollama run llama3 "Ciao"
+ollama run llama3.2:3b "Ciao"
 ```
-
-La simulazione usa l'endpoint API locale di Ollama:
-
-```text
-http://localhost:11434/api/generate
-```
-
-Assicurati che Ollama sia in esecuzione prima di avviare la simulazione.
 
 ---
 
-## Esecuzione della simulazione
+# Esecuzione della simulazione
 
-Dalla cartella principale del progetto, esegui:
+Avvia:
 
 ```bash
 python simulations/run_simulation.py
 ```
 
-Lo script genera un file CSV nella cartella `results/`:
+Ogni esecuzione crea un nuovo file CSV:
 
 ```text
 results/sim_YYYYMMDD_HHMMSS.csv
 ```
 
-Ogni esecuzione crea un nuovo file e non sovrascrive i risultati precedenti.
-
-Il CSV include metadati come:
-
-- identificativo della run;
-- nome del modello;
-- profilo agente;
-- scenario del messaggio;
-- caratteristiche del messaggio;
-- scelta grezza prodotta dal LLM;
-- scelta normalizzata;
-- stato del parsing;
-- motivazione;
-- risposta grezza del modello.
+I risultati precedenti NON vengono sovrascritti.
 
 ---
 
-## Azioni di output
+# Variabili salvate nel CSV
 
-La simulazione chiede a ogni agente sintetico di scegliere esattamente una delle seguenti azioni:
+Ogni riga rappresenta una singola interazione agente-messaggio.
+
+Il CSV include:
+
+| Colonna | Significato |
+|---|---|
+| `agent_id` | ID dell’agente sintetico |
+| `age` | Età |
+| `age_group` | Fascia d’età |
+| `role` | Ruolo simulato |
+| `crypto_experience` | Esperienza crypto |
+| `security_training` | Formazione sicurezza |
+| `environment` | Ambiente d’uso |
+| `background` | Contesto individuale |
+| `message_id` | ID scenario |
+| `message_type` | Tipo messaggio |
+| `channel` | Canale |
+| `urgency` | Urgenza percepita |
+| `personalization` | Personalizzazione |
+| `reward` | Beneficio percepito |
+| `choice` | Azione finale |
+| `motivation` | Motivazione generata dal modello |
+| `parse_error` | Errore tecnico di parsing |
+
+---
+
+# Azioni possibili
+
+Gli agenti devono scegliere una sola azione finale.
 
 ```text
 IGNORA
@@ -265,45 +410,126 @@ SEGNALA_COME_PHISHING
 PARSE_ERROR
 ```
 
+---
+
+# Significato delle azioni
+
 | Azione | Significato |
 |---|---|
-| `IGNORA` | L'agente ignora il messaggio. |
-| `APRE_LINK` | L'agente apre il link, ma non compie ulteriori azioni rischiose. |
-| `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | L'agente collega il wallet o approva una transazione potenzialmente malevola. |
-| `INSERISCE_CREDENZIALI_O_SEED` | L'agente inserisce credenziali, codici OTP, seed phrase o altre informazioni sensibili. |
-| `CONCEDE_ACCESSO_REMOTO` | L'agente installa, avvia o concede accesso remoto/condivisione schermo che potrebbe esporre il dispositivo all'attaccante. |
-| `INVIA_FONDI` | L'agente invia criptovalute all'indirizzo indicato dal messaggio. |
-| `VERIFICA_TRAMITE_CANALE_UFFICIALE` | L'agente verifica il messaggio tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta. |
-| `SEGNALA_COME_PHISHING` | L'agente segnala o classifica il messaggio come phishing. |
-| `PARSE_ERROR` | La risposta del modello non è stata interpretata o normalizzata correttamente. |
-
-I valori `PARSE_ERROR` sono trattati come errori tecnici e dovrebbero essere esclusi dall'analisi comportamentale.
+| `IGNORA` | Ignora il messaggio |
+| `APRE_LINK` | Apre il link ma si ferma prima di azioni pericolose |
+| `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | Collega wallet o approva una transazione |
+| `INSERISCE_CREDENZIALI_O_SEED` | Inserisce credenziali o seed phrase |
+| `CONCEDE_ACCESSO_REMOTO` | Concede accesso remoto o condivisione schermo |
+| `INVIA_FONDI` | Invia criptovalute |
+| `VERIFICA_TRAMITE_CANALE_UFFICIALE` | Controlla tramite canali affidabili |
+| `SEGNALA_COME_PHISHING` | Segnala il phishing |
+| `PARSE_ERROR` | Errore tecnico |
 
 ---
 
-## Esecuzione dell'analisi
+# Estensione sul caso studio
 
-Dopo aver generato almeno un file CSV, apri JupyterLab:
+La simulazione include scenari ispirati al caso studio analizzato nella tesi.
+
+Gli scenari modellano:
+- falso supporto tecnico;
+- allarmi di sicurezza;
+- urgenza;
+- richiesta di verifica account;
+- assistenza remota;
+- protezione dei fondi.
+
+È incluso anche un profilo sintetico di utente crypto ad alto valore.
+
+Gli scenari NON ricostruiscono parola per parola l’attacco reale: sono modellazioni basate su informazioni pubbliche.
+
+---
+
+# Metriche principali
+
+---
+
+## Click rate
+
+Percentuale di messaggi di phishing in cui l’agente apre il link.
+
+---
+
+## Wallet/transaction approval rate
+
+Percentuale di messaggi in cui l’agente collega wallet o approva transazioni.
+
+---
+
+## Credential disclosure rate
+
+Percentuale di messaggi in cui vengono inserite credenziali, OTP o seed phrase.
+
+---
+
+## Remote access rate
+
+Percentuale di messaggi in cui viene concesso accesso remoto.
+
+---
+
+## Fund transfer rate
+
+Percentuale di messaggi in cui vengono inviati fondi.
+
+---
+
+## Tasso di compromissione
+
+Percentuale di messaggi in cui l’agente compie un’azione chiaramente pericolosa.
+
+Comprende:
+- collegamento wallet;
+- approvazione transazioni;
+- accesso remoto;
+- inserimento credenziali;
+- invio fondi.
+
+---
+
+## Loose failure rate
+
+Percentuale di messaggi in cui l’agente compie una qualunque interazione rischiosa, incluso il semplice click sul link.
+
+---
+
+## Reporting rate
+
+Percentuale di messaggi segnalati come phishing.
+
+---
+
+## Verification rate
+
+Percentuale di messaggi verificati tramite canali affidabili.
+
+---
+
+# Esecuzione dell’analisi
+
+Apri Jupyter:
 
 ```bash
 jupyter lab
 ```
 
-Poi apri:
+Poi:
 
 ```text
 analysis.ipynb
 ```
 
-Esegui tutte le celle:
+Esegui tutte le celle.
 
-```text
-Run → Run All Cells
-```
+Il notebook carica automaticamente l’ultimo CSV disponibile.
 
-Il notebook carica automaticamente il file CSV più recente dalla cartella `results/` e produce statistiche e grafici riassuntivi.
-
-I grafici e le tabelle generati vengono salvati localmente in:
+Grafici e tabelle vengono salvati in:
 
 ```text
 results/plots/
@@ -311,102 +537,75 @@ results/plots/
 
 ---
 
-## Metriche
+# Prestazioni
 
-L'analisi separa i messaggi di phishing dai messaggi legittimi e distingue inoltre gli scenari generici dagli scenari ispirati al caso studio.
+La velocità della simulazione dipende soprattutto da:
+- dimensione del modello;
+- lunghezza del prompt;
+- uso della GPU;
+- numero di interazioni.
 
-Per gli scenari di phishing, le metriche principali sono:
+Usare:
 
-| Metrica | Descrizione |
-|---|---|
-| Click rate | Percentuale di messaggi di phishing in cui l'agente apre il link. |
-| Wallet/transaction approval rate | Percentuale di messaggi di phishing in cui l'agente collega il wallet o approva una transazione. |
-| Credential/seed disclosure rate | Percentuale di messaggi di phishing in cui l'agente inserisce credenziali, OTP o seed phrase. |
-| Remote access rate | Percentuale di messaggi di phishing in cui l'agente concede accesso remoto o condivisione schermo. |
-| Fund transfer rate | Percentuale di messaggi di phishing in cui l'agente invia fondi. |
-| Strict compromise rate | Percentuale di messaggi di phishing in cui l'agente compie un'azione chiaramente compromettente. |
-| Loose failure rate | Percentuale di messaggi di phishing in cui l'agente compie una qualunque interazione rischiosa. |
-| Reporting rate | Percentuale di messaggi di phishing segnalati come phishing. |
-| Verification rate | Percentuale di messaggi di phishing verificati tramite canali ufficiali o affidabili. |
-
-Per i messaggi legittimi, l'analisi si concentra su:
-
-| Metrica | Descrizione |
-|---|---|
-| Legitimate interaction rate | Percentuale di messaggi legittimi in cui l'agente interagisce normalmente. |
-| False positive rate | Percentuale di messaggi legittimi erroneamente segnalati come phishing. |
-
----
-
-## Riproducibilità
-
-La simulazione usa un seed fisso per rendere deterministica l'espansione dei profili:
-
-```python
-RANDOM_SEED = 42
+```text
+llama3.2:3b
 ```
 
-Anche i parametri di generazione del modello sono configurati nello script di simulazione.
-
-Ogni file CSV salva il `run_id` e il nome del modello, così da facilitare il confronto tra run, prompt o modelli diversi.
+riduce molto i tempi rispetto a modelli più grandi.
 
 ---
 
-## Considerazioni etiche e di sicurezza
+# Considerazioni etiche
 
-Questo repository non include e non supporta:
-
-- infrastrutture reali di phishing;
-- raccolta di credenziali;
+Il repository NON include:
 - malware;
-- domini malevoli reali;
-- vittime reali;
-- interazioni reali con wallet;
-- attacchi automatizzati;
-- strumenti offensivi di exploit.
+- phishing kit;
+- stealer;
+- exploit;
+- infrastrutture reali;
+- automazione offensiva.
 
-Tutti i messaggi di phishing sono sintetici e usati esclusivamente in un ambiente locale e controllato.
+Tutti gli scenari sono sintetici.
 
-Lo scopo del progetto è supportare didattica, consapevolezza sulla sicurezza e ricerca accademica.
-
----
-
-## Limiti
-
-Il progetto presenta alcuni limiti importanti:
-
-1. **Gli agenti sintetici non sono utenti reali.**  
-   Il loro comportamento è generato da un LLM e dipende dal prompt, dal modello e dai parametri della simulazione.
-
-2. **I risultati non sono statisticamente rappresentativi.**  
-   I profili sintetici non costituiscono un campione della popolazione e non devono essere interpretati come tassi reali di vulnerabilità al phishing.
-
-3. **Gli LLM possono mostrare bias di sicurezza.**  
-   Il modello può riconoscere indicatori evidenti di phishing più facilmente di un utente medio, soprattutto in scenari che coinvolgono seed phrase, credenziali o accesso remoto.
-
-4. **La simulazione è esplorativa.**  
-   Il valore dell'esperimento sta nel confronto tra scenari, profili e pattern comportamentali, non nella stima di percentuali reali.
-
-5. **Il prompt influenza i risultati.**  
-   Formulazioni diverse, modelli diversi, temperature diverse o definizioni diverse delle azioni possono produrre esiti differenti.
-
-6. **Gli scenari del caso studio sono modellati, non ricostruiti parola per parola.**  
-   Gli scenari ispirati al caso studio derivano da descrizioni pubbliche dell'attacco, ma non riproducono le comunicazioni originali tra attaccanti e vittima.
-
-Questi limiti devono essere considerati esplicitamente nella discussione della tesi.
+Il progetto ha finalità esclusivamente difensive e accademiche.
 
 ---
 
-## Uso accademico
+# Limiti
 
-Questo repository è stato sviluppato nell'ambito di una tesi triennale in Cybersecurity presso l'Università degli Studi di Milano.
+Il progetto presenta diversi limiti importanti.
 
-Il framework sperimentale integra l'analisi teorica degli attacchi di ingegneria sociale legati alle criptovalute, fornendo un ambiente di simulazione controllato e riproducibile.
+1. Gli agenti sintetici non sono persone reali.
+
+2. I risultati non sono statisticamente rappresentativi.
+
+3. Gli LLM possono avere bias di sicurezza.
+
+4. Il prompt influenza molto i risultati.
+
+5. Modelli diversi producono risultati diversi.
+
+6. Gli scenari del caso studio sono approssimazioni.
+
+7. Il comportamento umano reale non può essere riprodotto perfettamente.
+
+Questi limiti vengono discussi esplicitamente nella tesi.
 
 ---
 
-## Disclaimer
+# Contesto accademico
 
-Questo progetto è fornito esclusivamente per finalità didattiche e di ricerca.
+Progetto sviluppato per una tesi triennale in Cybersecurity presso l’Università degli Studi di Milano.
 
-L'autore non approva, abilita o incoraggia phishing, frodi, furto di credenziali o qualunque forma di accesso non autorizzato. Tutti gli scenari sono sintetici e progettati esclusivamente per sperimentazione accademica sicura.
+Il lavoro combina:
+- sicurezza crypto;
+- social engineering;
+- simulazioni comportamentali;
+- LLM locali;
+- analisi sperimentale.
+
+---
+
+# Licenza
+
+Repository destinato a uso accademico e didattico.
