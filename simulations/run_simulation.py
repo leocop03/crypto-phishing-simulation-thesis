@@ -5,6 +5,34 @@ from datetime import datetime
 import requests
 import random
 
+ALLOWED_CHOICES = {
+    "IGNORA",
+    "CLICCA_SUL_LINK",
+    "INSERISCI_CREDENZIALI",
+    "CHIEDI_AIUTO_AMICO",
+    "SEGNALA_COME_PHISHING",
+    "PARSE_ERROR",
+}
+
+CHOICE_MAPPING = {
+    "1": "IGNORA",
+    "1) IGNORA": "IGNORA",
+
+    "2": "CLICCA_SUL_LINK",
+    "2) CLICCA_SUL_LINK": "CLICCA_SUL_LINK",
+    "CLICK_SUL_LINK": "CLICCA_SUL_LINK",
+    "CLICKA_SUL_LINK": "CLICCA_SUL_LINK",
+
+    "3": "INSERISCI_CREDENZIALI",
+    "3) INSERISCI_CREDENZIALI": "INSERISCI_CREDENZIALI",
+
+    "4": "CHIEDI_AIUTO_AMICO",
+    "4) CHIEDI_AIUTO_AMICO": "CHIEDI_AIUTO_AMICO",
+
+    "5": "SEGNALA_COME_PHISHING",
+    "5) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
+}
+
 
 # ------- CONFIGURAZIONE -------
 
@@ -15,7 +43,8 @@ ARCHETYPES_PATH = os.path.join("agents", "profiles_archetypes.json")
 MESSAGES_PATH = os.path.join("scenarios", "messages.json")
 
 RESULTS_DIR = "results"
-INSTANCES_PER_ARCHETYPE = 6  # 14 archetipi * 6 ≈ 84 agenti
+INSTANCES_PER_ARCHETYPE = 6  # 15 archetipi * 6 = 90 agenti
+RANDOM_SEED = 42
 
 
 # ------- FUNZIONI DI CARICAMENTO -------
@@ -99,7 +128,8 @@ Non aggiungere testo fuori dal JSON.
 def query_llm(prompt: str) -> dict:
     """
     Invia il prompt a Ollama e tenta di parsare un JSON con 'choice' e 'motivation'.
-    In caso di errore, ritorna una scelta di fallback 'IGNORA'.
+    Salva sia la scelta grezza sia quella normalizzata.
+    In caso di errore ritorna PARSE_ERROR, non IGNORA, per non falsare i risultati.
     """
     try:
         response = requests.post(
@@ -115,7 +145,6 @@ def query_llm(prompt: str) -> dict:
         data = response.json()
         text = data.get("response", "")
 
-        # Cerca un blocco JSON dentro la risposta
         start = text.find("{")
         end = text.rfind("}")
         if start == -1 or end == -1:
@@ -124,29 +153,36 @@ def query_llm(prompt: str) -> dict:
         json_str = text[start:end + 1]
         parsed = json.loads(json_str)
 
-        # Normalizza chiavi
-        choice = str(parsed.get("choice", "")).strip().upper()
+        raw_choice = str(parsed.get("choice", "")).strip().upper()
         motivation = str(parsed.get("motivation", "")).strip()
 
-        if choice == "":
-            choice = "IGNORA"
+        normalized_choice = CHOICE_MAPPING.get(raw_choice, raw_choice)
+
+        if normalized_choice not in ALLOWED_CHOICES:
+            normalized_choice = "PARSE_ERROR"
 
         return {
-            "choice": choice,
-            "motivation": motivation
+            "raw_choice": raw_choice,
+            "choice": normalized_choice,
+            "motivation": motivation,
+            "raw_response": text,
+            "parse_error": normalized_choice == "PARSE_ERROR"
         }
 
     except Exception as e:
-        # fallback molto conservativo
         return {
-            "choice": "IGNORA",
-            "motivation": f"Fallback per errore di parsing o chiamata modello: {e}"
+            "raw_choice": "",
+            "choice": "PARSE_ERROR",
+            "motivation": f"Errore parsing/chiamata modello: {e}",
+            "raw_response": "",
+            "parse_error": True
         }
 
 
 # ------- MAIN SIMULATION -------
 
 def main():
+    random.seed(RANDOM_SEED)
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     # 1) carica archetipi e li espande in profili
@@ -158,11 +194,15 @@ def main():
 
     # 3) prepara file CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_id = timestamp
+
     out_path = os.path.join(RESULTS_DIR, f"sim_{timestamp}.csv")
 
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow([
+            "run_id",
+            "model",
             "agent_id",
             "age",
             "age_group",
@@ -177,8 +217,11 @@ def main():
             "urgency",
             "personalization",
             "reward",
+            "raw_choice",
             "choice",
-            "motivation"
+            "parse_error",
+            "motivation",
+            "raw_response"
         ])
 
         # 4) per ogni agente x messaggio, genera prompt, chiama LLM, salva riga
@@ -196,6 +239,8 @@ def main():
                 feats = message.get("features", {})
 
                 writer.writerow([
+                    run_id,
+                    OLLAMA_MODEL,
                     profile.get("id"),
                     profile.get("age"),
                     profile.get("age_group"),
@@ -210,8 +255,11 @@ def main():
                     feats.get("urgency"),
                     feats.get("personalization"),
                     feats.get("reward"),
+                    resp.get("raw_choice", ""),
                     resp.get("choice", ""),
-                    resp.get("motivation", "").replace("\n", " ")
+                    resp.get("parse_error", ""),
+                    resp.get("motivation", "").replace("\n", " "),
+                    resp.get("raw_response", "").replace("\n", " ")
                 ])
 
     print(f"Simulazione completata. File salvato in: {out_path}")

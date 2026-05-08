@@ -4,7 +4,7 @@
     "type": "phishing",
     "channel": "email",
     "description": "Finta mail dell'exchange che minaccia blocco conto se non aggiorni KYC",
-    "text": "Gentile utente,\n\nabbiamo rilevato alcune anomalie nel suo account. Per rispettare le norme KYC/AML è necessario aggiornare immediatamente i suoi dati. In caso di mancato aggiornamento entro 24 ore, il suo account verrà temporaneamente sospeso e le transazioni bloccate.\n\nClicchi sul seguente link per verificare i dati e sbloccare il suo account:\nhttps://secure-exchange-verifica.com/kyc\n\nCordiali saluti,\nReparto Sicurezza",
+    "text": "Gentile utente,\n\nabbiamo rilevato alcune anomalie nel suo account. Per rispettare le norme KYC/AML è necessario aggiornare immediatamente i suoi dati. In caso di mancato aggiornamento entro 24 ore, il suo account verrà temporaneamente sospeso e le transazioni bloccate.\n\nClicchi sul seguente link per verificare i dati e sbloccare il suo account:\nhttps://secure-exchange-verifica.test/kyc\n\nCordiali saluti,\nReparto Sicurezza",
     "features": {
       "urgency": "alta",
       "personalization": "bassa",
@@ -17,7 +17,7 @@
     "type": "phishing",
     "channel": "social",
     "description": "Airdrop DeFi con APY molto elevati",
-    "text": "🎉 COMPLIMENTI! 🎉\n\nSei stato selezionato per ricevere un airdrop esclusivo del nuovo protocollo DeFi X, con APY fino al 500% sulle tue criptovalute. L'offerta è limitata ai primi 500 utenti.\n\nPer ricevere i token gratuiti, collega ORA il tuo wallet al seguente link e approva la transazione iniziale:\nhttps://defi-x-airdrop.io/connect\n\nNon perdere questa occasione unica!",
+    "text": "🎉 COMPLIMENTI! 🎉\n\nSei stato selezionato per ricevere un airdrop esclusivo del nuovo protocollo DeFi X, con APY fino al 500% sulle tue criptovalute. L'offerta è limitata ai primi 500 utenti.\n\nPer ricevere i token gratuiti, collega ORA il tuo wallet al seguente link e approva la transazione iniziale:\nhttps://defi-x-airdrop.test/connect\n\nNon perdere questa occasione unica!",
     "features": {
       "urgency": "media",
       "personalization": "bassa",
@@ -43,7 +43,7 @@
     "type": "phishing",
     "channel": "chat",
     "description": "Finto moderatore Discord che invia link a dApp malevola",
-    "text": "Ciao! Sono Luca, moderatore del server ufficiale DeFiYieldClub.\n\nStiamo lanciando in anticipo una nuova funzione di staking riservata ai membri più attivi del server. Per partecipare alla fase di beta privata e ottenere un bonus del 50% sulle ricompense, devi solo collegare il tuo wallet tramite il nostro link interno:\nhttps://beta-defiyieldclub.app/stake\n\nTi chiedo di non condividere questo link fuori dal server, è solo per i membri fidati 😉",
+    "text": "Ciao! Sono Luca, moderatore del server ufficiale DeFiYieldClub.\n\nStiamo lanciando in anticipo una nuova funzione di staking riservata ai membri più attivi del server. Per partecipare alla fase di beta privata e ottenere un bonus del 50% sulle ricompense, devi solo collegare il tuo wallet tramite il nostro link interno:\nhttps://beta-defiyieldclub.test/stake\n\nTi chiedo di non condividere questo link fuori dal server, è solo per i membri fidati 😉",
     "features": {
       "urgency": "bassa",
       "personalization": "alta",
@@ -69,7 +69,7 @@
     "type": "phishing",
     "channel": "mobile",
     "description": "Notifica push che invita a scaricare una falsa app wallet",
-    "text": "🔔 Aggiornamento critico disponibile per CryptoSafe Wallet\n\nPer continuare a utilizzare il wallet in sicurezza e correggere una vulnerabilità recentemente scoperta, è necessario installare l'ultima versione dell'app.\n\nClicca qui per scaricare l'aggiornamento da CryptoSafe Wallet Store:\nhttps://cryptosafe-wallet-secure-update.com/download\n\nIgnorare questo aggiornamento potrebbe causare perdita di fondi.",
+    "text": "🔔 Aggiornamento critico disponibile per CryptoSafe Wallet\n\nPer continuare a utilizzare il wallet in sicurezza e correggere una vulnerabilità recentemente scoperta, è necessario installare l'ultima versione dell'app.\n\nClicca qui per scaricare l'aggiornamento da CryptoSafe Wallet Store:\nhttps://cryptosafe-wallet-secure-update.test/download\n\nIgnorare questo aggiornamento potrebbe causare perdita di fondi.",
     "features": {
       "urgency": "media",
       "personalization": "bassa",
@@ -82,7 +82,7 @@
     "type": "legitimo",
     "channel": "email",
     "description": "Mail legittima di reset password (controllo)",
-    "text": "Gentile utente,\n\nabbiamo ricevuto una richiesta di reset della password per il suo account sull'exchange CoinSecure.\n\nSe hai effettuato tu la richiesta, clicca sul seguente link per impostare una nuova password:\nhttps://www.coinsecure.com/reset?token=XYZ\n\nSe non hai richiesto il reset, ignora questa email. Il tuo account rimarrà invariato.\n\nCordiali saluti,\nTeam CoinSecure",
+    "text": "Gentile utente,\n\nabbiamo ricevuto una richiesta di reset della password per il suo account sull'exchange CoinSecure.\n\nSe hai effettuato tu la richiesta, clicca sul seguente link per impostare una nuova password:\nhttps://www.coinsecure.test/reset?token=XYZ\n\nSe non hai richiesto il reset, ignora questa email. Il tuo account rimarrà invariato.\n\nCordiali saluti,\nTeam CoinSecure",
     "features": {
       "urgency": "bassa",
       "personalization": "media",
@@ -95,7 +95,7 @@
     "type": "legitimo",
     "channel": "email",
     "description": "Newsletter educativa sulla sicurezza (controllo)",
-    "text": "Ciao,\n\nin questo numero della nostra newsletter ti spieghiamo come riconoscere le email di phishing e proteggere il tuo wallet:\n\n- Non condividere mai la tua seed phrase o chiavi private\n- Controlla sempre l'URL del sito prima di inserire credenziali\n- Diffida dei messaggi che promettono guadagni facili e immediati\n\nPer approfondire, leggi la nostra guida completa:\nhttps://www.cryptoacademy.org/guide-sicurezza\n\nRimani al sicuro,\nCryptoAcademy",
+    "text": "Ciao,\n\nin questo numero della nostra newsletter ti spieghiamo come riconoscere le email di phishing e proteggere il tuo wallet:\n\n- Non condividere mai la tua seed phrase o chiavi private\n- Controlla sempre l'URL del sito prima di inserire credenziali\n- Diffida dei messaggi che promettono guadagni facili e immediati\n\nPer approfondire, leggi la nostra guida completa:\nhttps://www.cryptoacademy.test/guide-sicurezza\n\nRimani al sicuro,\nCryptoAcademy",
     "features": {
       "urgency": "nessuna",
       "personalization": "bassa",
