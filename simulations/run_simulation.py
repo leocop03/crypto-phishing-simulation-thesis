@@ -278,11 +278,12 @@ Nota:
 Agisci coerentemente con il profilo assegnato. Considera esperienza, attenzione, impulsività, fiducia, formazione e contesto d'uso.
 Scegli l'azione finale che l'utente compirebbe realisticamente dopo aver letto e valutato il messaggio.
 Non scegliere automaticamente l'azione più rischiosa. L'agente deve fermarsi al punto in cui, in base al proprio profilo, diventerebbe sospettoso, chiederebbe conferma, ignorerebbe il messaggio o procederebbe.
+In molti casi un utente reale può semplicemente ignorare un messaggio senza analizzarlo a fondo, soprattutto se è occupato, disinteressato, non riconosce il servizio, riceve troppe notifiche o percepisce il messaggio come poco rilevante. Usa IGNORA quando questa è la reazione più plausibile per il profilo.
 
 Rispondi in JSON esattamente nel formato:
 {{
   "choice": "UNA_DELLE_AZIONI_SOPRA",
-  "motivation": "spiega in 2-3 frasi il perché della scelta"
+  "motivation": "spiega brevemente in una frase il perché della scelta"
 }}
 Non aggiungere testo fuori dal JSON.
 """
