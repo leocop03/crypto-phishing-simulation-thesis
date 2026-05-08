@@ -7,9 +7,11 @@ import random
 
 ALLOWED_CHOICES = {
     "IGNORA",
-    "CLICCA_SUL_LINK",
-    "INSERISCI_CREDENZIALI",
-    "CHIEDI_AIUTO_AMICO",
+    "APRE_LINK",
+    "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "INSERISCE_CREDENZIALI_O_SEED",
+    "INVIA_FONDI",
+    "VERIFICA_TRAMITE_CANALE_UFFICIALE",
     "SEGNALA_COME_PHISHING",
     "PARSE_ERROR",
 }
@@ -18,19 +20,34 @@ CHOICE_MAPPING = {
     "1": "IGNORA",
     "1) IGNORA": "IGNORA",
 
-    "2": "CLICCA_SUL_LINK",
-    "2) CLICCA_SUL_LINK": "CLICCA_SUL_LINK",
-    "CLICK_SUL_LINK": "CLICCA_SUL_LINK",
-    "CLICKA_SUL_LINK": "CLICCA_SUL_LINK",
+    "2": "APRE_LINK",
+    "2) APRE_LINK": "APRE_LINK",
+    "CLICCA_SUL_LINK": "APRE_LINK",
+    "CLICK_SUL_LINK": "APRE_LINK",
+    "CLICKA_SUL_LINK": "APRE_LINK",
 
-    "3": "INSERISCI_CREDENZIALI",
-    "3) INSERISCI_CREDENZIALI": "INSERISCI_CREDENZIALI",
+    "3": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "3) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "COLLEGA_WALLET": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "APPROVA_TRANSAZIONE": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
 
-    "4": "CHIEDI_AIUTO_AMICO",
-    "4) CHIEDI_AIUTO_AMICO": "CHIEDI_AIUTO_AMICO",
+    "4": "INSERISCE_CREDENZIALI_O_SEED",
+    "4) INSERISCE_CREDENZIALI_O_SEED": "INSERISCE_CREDENZIALI_O_SEED",
+    "INSERISCI_CREDENZIALI": "INSERISCE_CREDENZIALI_O_SEED",
+    "INSERISCE_CREDENZIALI": "INSERISCE_CREDENZIALI_O_SEED",
+    "INSERISCE_SEED": "INSERISCE_CREDENZIALI_O_SEED",
+    "FORNISCE_SEED": "INSERISCE_CREDENZIALI_O_SEED",
 
-    "5": "SEGNALA_COME_PHISHING",
-    "5) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
+    "5": "INVIA_FONDI",
+    "5) INVIA_FONDI": "INVIA_FONDI",
+
+    "6": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "6) VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "CHIEDI_AIUTO_AMICO": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "CHIEDE_AIUTO": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+
+    "7": "SEGNALA_COME_PHISHING",
+    "7) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
 }
 
 
@@ -109,12 +126,23 @@ Ricevi il seguente messaggio ({message.get('channel')}), relativo al mondo delle
 
 Devi scegliere UNA sola azione tra:
 1) IGNORA
-2) CLICCA_SUL_LINK
-3) INSERISCI_CREDENZIALI
-4) CHIEDI_AIUTO_AMICO
-5) SEGNALA_COME_PHISHING
+2) APRE_LINK
+3) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
+4) INSERISCE_CREDENZIALI_O_SEED
+5) INVIA_FONDI
+6) VERIFICA_TRAMITE_CANALE_UFFICIALE
+7) SEGNALA_COME_PHISHING
 
-INTERPRETA il profilo in modo realistico: non essere perfetto per forza, ma agisci come faresti nella vita reale dato il tuo carattere.
+Nota:
+- APRE_LINK indica che l’utente apre il collegamento ma non inserisce dati, non collega wallet e non autorizza transazioni.
+- COLLEGA_WALLET_O_APPROVA_TRANSAZIONE indica che l’utente collega il wallet o approva una richiesta on-chain potenzialmente rischiosa.
+- INSERISCE_CREDENZIALI_O_SEED indica che l’utente inserisce password, codice OTP, seed phrase o altre informazioni sensibili.
+- INVIA_FONDI indica che l’utente trasferisce criptovalute verso l’indirizzo indicato dal messaggio.
+- VERIFICA_TRAMITE_CANALE_UFFICIALE indica che l’utente non procede subito, ma controlla tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta.
+
+Agisci coerentemente con il profilo assegnato, includendo possibili errori di valutazione, distrazione o eccessiva fiducia quando compatibili con le caratteristiche dell’agente. 
+Non essere necessariamente prudente: scegli l’azione più plausibile per quel profilo.
+Non ripetere meccanicamente i dati del profilo nella motivazione. Spiega solo il ragionamento che porta alla scelta.
 
 Rispondi in JSON esattamente nel formato:
 {{
@@ -137,7 +165,12 @@ def query_llm(prompt: str) -> dict:
             json={
                 "model": OLLAMA_MODEL,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "format": "json",
+                "options": {
+                    "temperature": 0.4,
+                    "seed": RANDOM_SEED
+                }
             },
             timeout=60
         )

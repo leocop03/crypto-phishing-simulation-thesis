@@ -79,7 +79,7 @@
   },
   {
     "id": "exchange_legit_password_reset",
-    "type": "legitimo",
+    "type": "legittimo",
     "channel": "email",
     "description": "Mail legittima di reset password (controllo)",
     "text": "Gentile utente,\n\nabbiamo ricevuto una richiesta di reset della password per il suo account sull'exchange CoinSecure.\n\nSe hai effettuato tu la richiesta, clicca sul seguente link per impostare una nuova password:\nhttps://www.coinsecure.test/reset?token=XYZ\n\nSe non hai richiesto il reset, ignora questa email. Il tuo account rimarrà invariato.\n\nCordiali saluti,\nTeam CoinSecure",
@@ -92,7 +92,7 @@
   },
   {
     "id": "newsletter_legit_sicurezza",
-    "type": "legitimo",
+    "type": "legittimo",
     "channel": "email",
     "description": "Newsletter educativa sulla sicurezza (controllo)",
     "text": "Ciao,\n\nin questo numero della nostra newsletter ti spieghiamo come riconoscere le email di phishing e proteggere il tuo wallet:\n\n- Non condividere mai la tua seed phrase o chiavi private\n- Controlla sempre l'URL del sito prima di inserire credenziali\n- Diffida dei messaggi che promettono guadagni facili e immediati\n\nPer approfondire, leggi la nostra guida completa:\nhttps://www.cryptoacademy.test/guide-sicurezza\n\nRimani al sicuro,\nCryptoAcademy",
