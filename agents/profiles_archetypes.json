@@ -1,5 +1,22 @@
 [
   {
+    "id": "case_study_genesis_creditor_high_value_holder",
+    "label": "Creditore Genesis / investitore crypto ad alto patrimonio",
+    "age": 48,
+    "age_group": "46-60",
+    "role": "investitore_crypto_high_value",
+    "crypto_experience": "alta",
+    "security_training": "autodidatta",
+    "environment": "gestione_di_wallet_personali_exchange_e_account_cloud",
+    "traits": {
+      "impulsiveness": "bassa",
+      "trust_in_brands": "media",
+      "tech_savvy": "alta",
+      "attention_level": "media",
+      "risk_aversion": "alta"
+    }
+  },
+  {
     "id": "teen_gamer_lowsec",
     "label": "Teen gamer poco attento",
     "age": 17,

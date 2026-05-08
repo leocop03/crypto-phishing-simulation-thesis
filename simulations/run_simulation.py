@@ -10,6 +10,7 @@ ALLOWED_CHOICES = {
     "APRE_LINK",
     "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
     "INSERISCE_CREDENZIALI_O_SEED",
+    "CONCEDE_ACCESSO_REMOTO",
     "INVIA_FONDI",
     "VERIFICA_TRAMITE_CANALE_UFFICIALE",
     "SEGNALA_COME_PHISHING",
@@ -38,16 +39,20 @@ CHOICE_MAPPING = {
     "INSERISCE_SEED": "INSERISCE_CREDENZIALI_O_SEED",
     "FORNISCE_SEED": "INSERISCE_CREDENZIALI_O_SEED",
 
-    "5": "INVIA_FONDI",
-    "5) INVIA_FONDI": "INVIA_FONDI",
+    "5": "CONCEDE_ACCESSO_REMOTO",
+    "5) CONCEDE_ACCESSO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
+    "INSTALLA_SOFTWARE_ACCESSO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
+    "CONCEDE_CONTROLLO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
+    "CONDIVIDE_SCHERMO": "CONCEDE_ACCESSO_REMOTO",
 
-    "6": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "6) VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "CHIEDI_AIUTO_AMICO": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "CHIEDE_AIUTO": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "6": "INVIA_FONDI",
+    "6) INVIA_FONDI": "INVIA_FONDI",
 
-    "7": "SEGNALA_COME_PHISHING",
-    "7) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
+    "7": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "7) VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+
+    "8": "SEGNALA_COME_PHISHING",
+    "8) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
 }
 
 
@@ -129,9 +134,10 @@ Devi scegliere UNA sola azione tra:
 2) APRE_LINK
 3) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
 4) INSERISCE_CREDENZIALI_O_SEED
-5) INVIA_FONDI
-6) VERIFICA_TRAMITE_CANALE_UFFICIALE
-7) SEGNALA_COME_PHISHING
+5) CONCEDE_ACCESSO_REMOTO
+6) INVIA_FONDI
+7) VERIFICA_TRAMITE_CANALE_UFFICIALE
+8) SEGNALA_COME_PHISHING
 
 Nota:
 - APRE_LINK indica che l’utente apre il collegamento ma non inserisce dati, non collega wallet e non autorizza transazioni.
@@ -139,10 +145,19 @@ Nota:
 - INSERISCE_CREDENZIALI_O_SEED indica che l’utente inserisce password, codice OTP, seed phrase o altre informazioni sensibili.
 - INVIA_FONDI indica che l’utente trasferisce criptovalute verso l’indirizzo indicato dal messaggio.
 - VERIFICA_TRAMITE_CANALE_UFFICIALE indica che l’utente non procede subito, ma controlla tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta.
+- CONCEDE_ACCESSO_REMOTO indica che l’utente installa o avvia un software di accesso remoto, condivide lo schermo, concede controllo remoto o segue istruzioni operative che permettono all’interlocutore di accedere al dispositivo.
 
-Agisci coerentemente con il profilo assegnato, includendo possibili errori di valutazione, distrazione o eccessiva fiducia quando compatibili con le caratteristiche dell’agente. 
-Non essere necessariamente prudente: scegli l’azione più plausibile per quel profilo.
-Non ripetere meccanicamente i dati del profilo nella motivazione. Spiega solo il ragionamento che porta alla scelta.
+Agisci coerentemente con il profilo assegnato. Considera esperienza, attenzione, impulsività, fiducia, formazione e contesto d'uso.
+Scegli l'azione finale che l'utente compirebbe realisticamente dopo aver letto e valutato il messaggio.
+Non scegliere automaticamente l'azione più rischiosa. L'agente deve fermarsi al punto in cui, in base al proprio profilo, diventerebbe sospettoso, chiederebbe conferma, ignorerebbe il messaggio o procederebbe.
+Se il messaggio non è rilevante per il profilo, se l'utente non riconosce il servizio, se è occupato, disinteressato o non ha un motivo concreto per interagire, può scegliere IGNORA.
+Se l'utente aprirebbe il link solo per controllare ma poi non inserirebbe dati, non collegherebbe wallet e non approverebbe transazioni, scegli APRE_LINK.
+Se l'utente aprirebbe il link e poi collegherebbe il wallet o approverebbe una richiesta on-chain, scegli COLLEGA_WALLET_O_APPROVA_TRANSAZIONE.
+Se l'utente inserirebbe credenziali, codici OTP o seed phrase, scegli INSERISCE_CREDENZIALI_O_SEED.
+Se l'utente invierebbe criptovalute all'indirizzo indicato, scegli INVIA_FONDI.
+Se l'utente non procede subito ma controlla tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta, scegli VERIFICA_TRAMITE_CANALE_UFFICIALE.
+Se l'utente riconosce chiaramente il tentativo di phishing e lo segnala o lo classifica come malevolo, scegli SEGNALA_COME_PHISHING.
+In molti casi un utente reale può semplicemente ignorare un messaggio senza analizzarlo a fondo. Usa IGNORA quando questa è la reazione più plausibile per il profilo.
 
 Rispondi in JSON esattamente nel formato:
 {{
