@@ -65,7 +65,7 @@ ARCHETYPES_PATH = os.path.join("agents", "profiles_archetypes.json")
 MESSAGES_PATH = os.path.join("scenarios", "messages.json")
 
 RESULTS_DIR = "results"
-INSTANCES_PER_ARCHETYPE = 6  # 15 archetipi * 6 = 90 agenti
+INSTANCES_PER_ARCHETYPE = 6  # 16 archetipi * 6 = 96 agenti
 RANDOM_SEED = 42
 
 
