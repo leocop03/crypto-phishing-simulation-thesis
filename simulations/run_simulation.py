@@ -79,9 +79,16 @@ VARIANT_PROFILES = [
     },
 ]
 
-ALLOWED_CHOICES = {
+ALLOWED_INITIAL_REACTIONS = {
     "IGNORA",
-    "APRE_LINK",
+    "APRE_MESSAGGIO_O_LINK",
+    "SEGNALA_SUBITO",
+    "VERIFICA_SUBITO",
+    "PARSE_ERROR",
+}
+
+ALLOWED_FINAL_ACTIONS = {
+    "NESSUNA_AZIONE_ULTERIORE",
     "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
     "INSERISCE_CREDENZIALI_O_SEED",
     "CONCEDE_ACCESSO_REMOTO",
@@ -91,43 +98,75 @@ ALLOWED_CHOICES = {
     "PARSE_ERROR",
 }
 
-CHOICE_MAPPING = {
+INITIAL_REACTION_MAPPING = {
     "1": "IGNORA",
     "1) IGNORA": "IGNORA",
 
-    "2": "APRE_LINK",
-    "2) APRE_LINK": "APRE_LINK",
-    "CLICCA_SUL_LINK": "APRE_LINK",
-    "CLICK_SUL_LINK": "APRE_LINK",
-    "CLICKA_SUL_LINK": "APRE_LINK",
+    "2": "APRE_MESSAGGIO_O_LINK",
+    "2) APRE_MESSAGGIO_O_LINK": "APRE_MESSAGGIO_O_LINK",
+    "APRE_LINK": "APRE_MESSAGGIO_O_LINK",
+    "APRE_MESSAGGIO": "APRE_MESSAGGIO_O_LINK",
+    "CLICCA_SUL_LINK": "APRE_MESSAGGIO_O_LINK",
+    "CLICK_SUL_LINK": "APRE_MESSAGGIO_O_LINK",
+    "CLICKA_SUL_LINK": "APRE_MESSAGGIO_O_LINK",
 
-    "3": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
-    "3) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "3": "SEGNALA_SUBITO",
+    "3) SEGNALA_SUBITO": "SEGNALA_SUBITO",
+    "SEGNALA_COME_PHISHING": "SEGNALA_SUBITO",
+
+    "4": "VERIFICA_SUBITO",
+    "4) VERIFICA_SUBITO": "VERIFICA_SUBITO",
+    "VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_SUBITO",
+}
+
+FINAL_ACTION_MAPPING = {
+    "0": "NESSUNA_AZIONE_ULTERIORE",
+    "1": "NESSUNA_AZIONE_ULTERIORE",
+    "1) NESSUNA_AZIONE_ULTERIORE": "NESSUNA_AZIONE_ULTERIORE",
+    "NESSUNA": "NESSUNA_AZIONE_ULTERIORE",
+    "NESSUNA_AZIONE": "NESSUNA_AZIONE_ULTERIORE",
+    "APRE_LINK": "NESSUNA_AZIONE_ULTERIORE",
+
+    "2": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "2) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
     "COLLEGA_WALLET": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
     "APPROVA_TRANSAZIONE": "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
 
-    "4": "INSERISCE_CREDENZIALI_O_SEED",
-    "4) INSERISCE_CREDENZIALI_O_SEED": "INSERISCE_CREDENZIALI_O_SEED",
+    "3": "INSERISCE_CREDENZIALI_O_SEED",
+    "3) INSERISCE_CREDENZIALI_O_SEED": "INSERISCE_CREDENZIALI_O_SEED",
     "INSERISCI_CREDENZIALI": "INSERISCE_CREDENZIALI_O_SEED",
     "INSERISCE_CREDENZIALI": "INSERISCE_CREDENZIALI_O_SEED",
     "INSERISCE_SEED": "INSERISCE_CREDENZIALI_O_SEED",
     "FORNISCE_SEED": "INSERISCE_CREDENZIALI_O_SEED",
 
-    "5": "CONCEDE_ACCESSO_REMOTO",
-    "5) CONCEDE_ACCESSO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
+    "4": "CONCEDE_ACCESSO_REMOTO",
+    "4) CONCEDE_ACCESSO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
     "INSTALLA_SOFTWARE_ACCESSO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
     "CONCEDE_CONTROLLO_REMOTO": "CONCEDE_ACCESSO_REMOTO",
     "CONDIVIDE_SCHERMO": "CONCEDE_ACCESSO_REMOTO",
 
-    "6": "INVIA_FONDI",
-    "6) INVIA_FONDI": "INVIA_FONDI",
+    "5": "INVIA_FONDI",
+    "5) INVIA_FONDI": "INVIA_FONDI",
 
-    "7": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "7) VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "6": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "6) VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
+    "VERIFICA_SUBITO": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
 
-    "8": "SEGNALA_COME_PHISHING",
-    "8) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
+    "7": "SEGNALA_COME_PHISHING",
+    "7) SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
+    "SEGNALA_SUBITO": "SEGNALA_COME_PHISHING",
 }
+
+COMPROMISING_FINAL_ACTIONS = {
+    "COLLEGA_WALLET_O_APPROVA_TRANSAZIONE",
+    "INSERISCE_CREDENZIALI_O_SEED",
+    "CONCEDE_ACCESSO_REMOTO",
+    "INVIA_FONDI",
+}
+
+
+def normalize_model_label(value) -> str:
+    return str(value).strip().upper().replace(" ", "_").replace("-", "_")
 
 
 # ------- CONFIGURAZIONE -------
@@ -237,7 +276,7 @@ def load_messages(path: str):
 def build_prompt(agent_profile: dict, message: dict) -> str:
     """
     Costruisce il prompt per un singolo agente e un singolo messaggio.
-    Il modello deve rispondere in JSON con 'choice' e 'motivation'.
+    Il modello deve rispondere in JSON con 'initial_reaction', 'final_action' e 'motivation'.
     """
     traits = agent_profile.get("traits", {})
     return f"""
@@ -257,18 +296,33 @@ Ricevi il seguente messaggio ({message.get('channel')}), relativo al mondo delle
 
 \"\"\"{message.get('text')}\"\"\".
 
-Devi scegliere UNA sola azione tra:
-1) IGNORA
-2) APRE_LINK
-3) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
-4) INSERISCE_CREDENZIALI_O_SEED
-5) CONCEDE_ACCESSO_REMOTO
-6) INVIA_FONDI
-7) VERIFICA_TRAMITE_CANALE_UFFICIALE
-8) SEGNALA_COME_PHISHING
+Devi modellare la risposta in due livelli distinti.
 
-Nota:
-- APRE_LINK indica che l’utente apre il collegamento ma non inserisce dati, non collega wallet e non autorizza transazioni.
+Livello 1 - reazione iniziale:
+1) IGNORA
+2) APRE_MESSAGGIO_O_LINK
+3) SEGNALA_SUBITO
+4) VERIFICA_SUBITO
+
+Livello 2 - azione finale o successiva:
+1) NESSUNA_AZIONE_ULTERIORE
+2) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
+3) INSERISCE_CREDENZIALI_O_SEED
+4) CONCEDE_ACCESSO_REMOTO
+5) INVIA_FONDI
+6) VERIFICA_TRAMITE_CANALE_UFFICIALE
+7) SEGNALA_COME_PHISHING
+
+Regole:
+- initial_reaction descrive cosa fa l'utente appena riceve il messaggio.
+- final_action descrive cosa fa dopo, se va oltre la prima reazione.
+- Se initial_reaction e IGNORA, final_action deve essere NESSUNA_AZIONE_ULTERIORE.
+- Se initial_reaction e SEGNALA_SUBITO, final_action deve essere SEGNALA_COME_PHISHING.
+- Se initial_reaction e VERIFICA_SUBITO, final_action deve essere VERIFICA_TRAMITE_CANALE_UFFICIALE.
+- Se initial_reaction e APRE_MESSAGGIO_O_LINK, final_action puo essere NESSUNA_AZIONE_ULTERIORE, una delle azioni compromettenti, oppure una verifica/segnalazione successiva.
+
+Significato delle azioni:
+- APRE_MESSAGGIO_O_LINK indica che l'utente apre il messaggio o il collegamento, ma questo da solo non equivale a compromissione.
 - COLLEGA_WALLET_O_APPROVA_TRANSAZIONE indica che l’utente collega il wallet o approva una richiesta on-chain potenzialmente rischiosa.
 - INSERISCE_CREDENZIALI_O_SEED indica che l’utente inserisce password, codice OTP, seed phrase o altre informazioni sensibili.
 - INVIA_FONDI indica che l’utente trasferisce criptovalute verso l’indirizzo indicato dal messaggio.
@@ -281,9 +335,12 @@ Non scegliere automaticamente l'azione più rischiosa. L'agente deve fermarsi al
 Nella vita reale alcune persone ignorano messaggi senza analizzarli a fondo, soprattutto quando sono occupate, disinteressate o percepiscono il messaggio come poco rilevante.
 Tuttavia, messaggi molto urgenti, personalizzati o legati alla sicurezza di account e fondi tendono più facilmente a generare una reazione attiva, positiva o negativa.
 
+Una reazione attiva non implica necessariamente compromissione: aprire il messaggio o il link puo fermarsi prima di inserire dati, collegare wallet, concedere accesso remoto o inviare fondi.
+
 Rispondi in JSON esattamente nel formato:
 {{
-  "choice": "UNA_DELLE_AZIONI_SOPRA",
+  "initial_reaction": "UNA_DELLE_REAZIONI_INIZIALI",
+  "final_action": "UNA_DELLE_AZIONI_FINALI",
   "motivation": "spiega brevemente in una frase il perché della scelta"
 }}
 Non aggiungere testo fuori dal JSON.
@@ -292,8 +349,8 @@ Non aggiungere testo fuori dal JSON.
 
 def query_llm(prompt: str) -> dict:
     """
-    Invia il prompt a Ollama e tenta di parsare un JSON con 'choice' e 'motivation'.
-    Salva sia la scelta grezza sia quella normalizzata.
+    Invia il prompt a Ollama e tenta di parsare un JSON con 'initial_reaction',
+    'final_action' e 'motivation'. Salva valori grezzi e normalizzati.
     In caso di errore ritorna PARSE_ERROR, non IGNORA, per non falsare i risultati.
     """
     try:
@@ -323,26 +380,56 @@ def query_llm(prompt: str) -> dict:
         json_str = text[start:end + 1]
         parsed = json.loads(json_str)
 
-        raw_choice = str(parsed.get("choice", "")).strip().upper()
+        raw_initial_reaction = normalize_model_label(parsed.get("initial_reaction", parsed.get("choice", "")))
+        raw_final_action = normalize_model_label(parsed.get("final_action", ""))
         motivation = str(parsed.get("motivation", "")).strip()
 
-        normalized_choice = CHOICE_MAPPING.get(raw_choice, raw_choice)
+        initial_reaction = INITIAL_REACTION_MAPPING.get(raw_initial_reaction, raw_initial_reaction)
+        final_action = FINAL_ACTION_MAPPING.get(raw_final_action, raw_final_action)
 
-        if normalized_choice not in ALLOWED_CHOICES:
-            normalized_choice = "PARSE_ERROR"
+        if initial_reaction not in ALLOWED_INITIAL_REACTIONS:
+            initial_reaction = "PARSE_ERROR"
+
+        if final_action not in ALLOWED_FINAL_ACTIONS:
+            final_action = "PARSE_ERROR"
+
+        if initial_reaction == "IGNORA":
+            final_action = "NESSUNA_AZIONE_ULTERIORE"
+        elif initial_reaction == "SEGNALA_SUBITO":
+            final_action = "SEGNALA_COME_PHISHING"
+        elif initial_reaction == "VERIFICA_SUBITO":
+            final_action = "VERIFICA_TRAMITE_CANALE_UFFICIALE"
+
+        parse_error = initial_reaction == "PARSE_ERROR" or final_action == "PARSE_ERROR"
+        engaged = initial_reaction not in {"IGNORA", "PARSE_ERROR"}
+        compromised = final_action in COMPROMISING_FINAL_ACTIONS
+        reported = initial_reaction == "SEGNALA_SUBITO" or final_action == "SEGNALA_COME_PHISHING"
+        verified = initial_reaction == "VERIFICA_SUBITO" or final_action == "VERIFICA_TRAMITE_CANALE_UFFICIALE"
 
         return {
-            "raw_choice": raw_choice,
-            "choice": normalized_choice,
+            "raw_initial_reaction": raw_initial_reaction,
+            "initial_reaction": initial_reaction,
+            "raw_final_action": raw_final_action,
+            "final_action": final_action,
+            "engaged": engaged,
+            "compromised": compromised,
+            "reported": reported,
+            "verified": verified,
             "motivation": motivation,
             "raw_response": text,
-            "parse_error": normalized_choice == "PARSE_ERROR"
+            "parse_error": parse_error
         }
 
     except Exception as e:
         return {
-            "raw_choice": "",
-            "choice": "PARSE_ERROR",
+            "raw_initial_reaction": "",
+            "initial_reaction": "PARSE_ERROR",
+            "raw_final_action": "",
+            "final_action": "PARSE_ERROR",
+            "engaged": False,
+            "compromised": False,
+            "reported": False,
+            "verified": False,
             "motivation": f"Errore parsing/chiamata modello: {e}",
             "raw_response": "",
             "parse_error": True
@@ -393,8 +480,14 @@ def main():
             "urgency",
             "personalization",
             "reward",
-            "raw_choice",
-            "choice",
+            "raw_initial_reaction",
+            "initial_reaction",
+            "raw_final_action",
+            "final_action",
+            "engaged",
+            "compromised",
+            "reported",
+            "verified",
             "parse_error",
             "motivation",
             "raw_response"
@@ -438,8 +531,14 @@ def main():
                     feats.get("urgency"),
                     feats.get("personalization"),
                     feats.get("reward"),
-                    resp.get("raw_choice", ""),
-                    resp.get("choice", ""),
+                    resp.get("raw_initial_reaction", ""),
+                    resp.get("initial_reaction", ""),
+                    resp.get("raw_final_action", ""),
+                    resp.get("final_action", ""),
+                    resp.get("engaged", ""),
+                    resp.get("compromised", ""),
+                    resp.get("reported", ""),
+                    resp.get("verified", ""),
                     resp.get("parse_error", ""),
                     resp.get("motivation", "").replace("\n", " "),
                     resp.get("raw_response", "").replace("\n", " ")
