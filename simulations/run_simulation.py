@@ -336,7 +336,7 @@ Regole logiche:
 Importante:
 - APRE_MESSAGGIO_O_LINK non significa compromissione.
 - Un utente può aprire un link per curiosità, paura, abitudine o fretta, ma poi fermarsi.
-- Un utente può anche compiere un'azione rischiosa se percepisce il messaggio come urgente, credibile, familiare o utile.
+- Un utente può anche proseguire con l'azione richiesta dal messaggio se la percepisce come urgente, credibile, familiare o utile.
 - Alta esperienza crypto non significa automaticamente alta prudenza.
 - Bassa formazione di sicurezza non significa automaticamente ingenuità totale.
 - Non rendere tutti prudenti e non rendere tutti imprudenti: valuta il singolo caso.
