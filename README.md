@@ -6,6 +6,8 @@ This repository contains the experimental component of a Bachelor's thesis in Cy
 
 The project implements a controlled simulation in which synthetic user profiles interact with phishing and legitimate messages related to cryptocurrency ecosystems. Each interaction is evaluated by a locally hosted Large Language Model (LLM) through Ollama.
 
+Agent responses are modeled in two levels: initial reaction to the message and final action, so the simulation separates simple engagement from actual compromise.
+
 The objective is not to create offensive tooling or realistic phishing infrastructure, but to study how different user characteristics and message properties may influence risky or defensive behavior.
 
 ---
@@ -60,6 +62,7 @@ The project aims to explore:
 - how urgency and personalization influence behavior;
 - how security awareness affects simulated decision-making;
 - how cryptocurrency experience changes attack susceptibility;
+- how initial engagement differs from final compromise;
 - how users react differently to legitimate and malicious messages;
 - how targeted social engineering attacks affect high-value profiles;
 - how LLM-based agents can be used in exploratory behavioral cybersecurity research.
@@ -395,19 +398,37 @@ The CSV includes:
 | `urgency` | Perceived urgency |
 | `personalization` | Personalization level |
 | `reward` | Perceived benefit |
-| `choice` | Final normalized action |
+| `raw_initial_reaction` | Raw initial reaction produced by the model |
+| `initial_reaction` | Normalized initial reaction |
+| `raw_final_action` | Raw final action produced by the model |
+| `final_action` | Normalized final action |
+| `engaged` | The agent produces an active response instead of ignoring the message |
+| `compromised` | The final action exposes an account, wallet, device or funds |
+| `reported` | The message is reported as phishing |
+| `verified` | The message is checked through a trusted channel |
 | `motivation` | LLM explanation |
 | `parse_error` | Parsing failure flag |
 
 ---
 
-# Possible Actions
+# Possible Reactions and Actions
 
-Agents must choose exactly one action.
+The simulation uses a two-level response. The first level captures the initial reaction to the message; the second level captures the eventual final action.
+
+## Initial Reaction
 
 ```text
 IGNORA
-APRE_LINK
+APRE_MESSAGGIO_O_LINK
+SEGNALA_SUBITO
+VERIFICA_SUBITO
+PARSE_ERROR
+```
+
+## Final Action
+
+```text
+NESSUNA_AZIONE_ULTERIORE
 COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
 INSERISCE_CREDENZIALI_O_SEED
 CONCEDE_ACCESSO_REMOTO
@@ -419,12 +440,19 @@ PARSE_ERROR
 
 ---
 
-## Action Meaning
+## Reaction and Action Meaning
 
-| Action | Meaning |
+| Initial reaction | Meaning |
 |---|---|
 | `IGNORA` | Ignores the message |
-| `APRE_LINK` | Opens the link but stops before dangerous actions |
+| `APRE_MESSAGGIO_O_LINK` | Opens the message or link; this alone does not imply compromise |
+| `SEGNALA_SUBITO` | Reports the message without proceeding |
+| `VERIFICA_SUBITO` | Checks through a trusted channel without proceeding |
+| `PARSE_ERROR` | Technical parsing failure |
+
+| Final action | Meaning |
+|---|---|
+| `NESSUNA_AZIONE_ULTERIORE` | Takes no further action after the initial reaction |
 | `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | Connects wallet or approves transaction |
 | `INSERISCE_CREDENZIALI_O_SEED` | Enters credentials or seed phrase |
 | `CONCEDE_ACCESSO_REMOTO` | Grants remote access or screen sharing |
@@ -459,9 +487,15 @@ The notebook computes several metrics.
 
 ---
 
-## Click Rate
+## Engagement Rate
 
-Percentage of phishing messages where the agent opens the link.
+Percentage of phishing messages where the agent does not ignore the message and produces an active response.
+
+---
+
+## Opened/Clicked Rate
+
+Percentage of phishing messages where the agent opens the message or link. This metric measures initial interaction, not compromise.
 
 ---
 
@@ -491,7 +525,7 @@ Percentage of phishing messages where the agent sends funds.
 
 ## Compromise Rate
 
-Percentage of phishing messages where the agent performs a clearly dangerous action.
+Percentage of phishing messages where the agent performs a clearly dangerous final action.
 
 Dangerous actions include:
 
@@ -506,7 +540,7 @@ Dangerous actions include:
 
 ## Loose Failure Rate
 
-Percentage of phishing messages where the agent performs any risky interaction, including simply opening the link.
+Percentage of phishing messages where the agent performs any risky interaction, including opening/clicking or final compromise.
 
 ---
 

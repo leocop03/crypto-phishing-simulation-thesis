@@ -6,6 +6,8 @@ Questo repository contiene la parte sperimentale di una tesi triennale in Cybers
 
 Il progetto implementa una simulazione controllata in cui profili utente sintetici interagiscono con messaggi di phishing e messaggi legittimi legati all’ecosistema crypto. Le decisioni degli agenti vengono generate tramite un Large Language Model eseguito localmente con Ollama.
 
+La risposta dell'agente è modellata in due livelli: reazione iniziale al messaggio e azione finale, in modo da distinguere il semplice engagement dalla compromissione effettiva.
+
 L’obiettivo non è creare strumenti offensivi o infrastrutture realistiche di phishing, ma studiare in modo sperimentale come diverse caratteristiche dell’utente e del messaggio possano influenzare comportamenti rischiosi o prudenti.
 
 ---
@@ -59,6 +61,7 @@ La simulazione serve a osservare:
 - come profili diversi reagiscono a tentativi di phishing;
 - quanto urgenza e personalizzazione influenzino il comportamento;
 - come esperienza crypto e formazione sulla sicurezza cambino le decisioni;
+- come la reazione iniziale si distingua dalla compromissione finale;
 - come gli utenti distinguano messaggi legittimi e malevoli;
 - come attacchi mirati possano colpire utenti ad alto valore;
 - come gli LLM possano essere usati in simulazioni comportamentali in ambito cybersecurity.
@@ -388,19 +391,37 @@ Il CSV include:
 | `urgency` | Urgenza percepita |
 | `personalization` | Personalizzazione |
 | `reward` | Beneficio percepito |
-| `choice` | Azione finale |
+| `raw_initial_reaction` | Reazione iniziale grezza prodotta dal modello |
+| `initial_reaction` | Reazione iniziale normalizzata |
+| `raw_final_action` | Azione finale grezza prodotta dal modello |
+| `final_action` | Azione finale normalizzata |
+| `engaged` | L'agente produce una risposta attiva invece di ignorare |
+| `compromised` | L'azione finale espone account, wallet, dispositivo o fondi |
+| `reported` | Il messaggio viene segnalato come phishing |
+| `verified` | Il messaggio viene verificato tramite canale affidabile |
 | `motivation` | Motivazione generata dal modello |
 | `parse_error` | Errore tecnico di parsing |
 
 ---
 
-# Azioni possibili
+# Reazioni e azioni possibili
 
-Gli agenti devono scegliere una sola azione finale.
+La simulazione usa una risposta a due livelli. Il primo livello descrive la reazione iniziale al messaggio; il secondo descrive l'eventuale azione finale.
+
+## Reazione iniziale
 
 ```text
 IGNORA
-APRE_LINK
+APRE_MESSAGGIO_O_LINK
+SEGNALA_SUBITO
+VERIFICA_SUBITO
+PARSE_ERROR
+```
+
+## Azione finale
+
+```text
+NESSUNA_AZIONE_ULTERIORE
 COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
 INSERISCE_CREDENZIALI_O_SEED
 CONCEDE_ACCESSO_REMOTO
@@ -412,12 +433,19 @@ PARSE_ERROR
 
 ---
 
-# Significato delle azioni
+# Significato delle reazioni e delle azioni
 
-| Azione | Significato |
+| Reazione iniziale | Significato |
 |---|---|
 | `IGNORA` | Ignora il messaggio |
-| `APRE_LINK` | Apre il link ma si ferma prima di azioni pericolose |
+| `APRE_MESSAGGIO_O_LINK` | Apre il messaggio o il link; da sola non indica compromissione |
+| `SEGNALA_SUBITO` | Segnala il messaggio senza procedere |
+| `VERIFICA_SUBITO` | Verifica tramite canale affidabile senza procedere |
+| `PARSE_ERROR` | Errore tecnico |
+
+| Azione finale | Significato |
+|---|---|
+| `NESSUNA_AZIONE_ULTERIORE` | Non prosegue oltre la prima reazione |
 | `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | Collega wallet o approva una transazione |
 | `INSERISCE_CREDENZIALI_O_SEED` | Inserisce credenziali o seed phrase |
 | `CONCEDE_ACCESSO_REMOTO` | Concede accesso remoto o condivisione schermo |
@@ -450,9 +478,15 @@ Gli scenari NON ricostruiscono parola per parola l’attacco reale: sono modella
 
 ---
 
-## Click rate
+## Engagement rate
 
-Percentuale di messaggi di phishing in cui l’agente apre il link.
+Percentuale di messaggi di phishing in cui l'agente non ignora il messaggio e produce una risposta attiva.
+
+---
+
+## Opened/clicked rate
+
+Percentuale di messaggi di phishing in cui l'agente apre il messaggio o il link. Questa metrica misura l'interazione iniziale, non la compromissione.
 
 ---
 
@@ -482,7 +516,7 @@ Percentuale di messaggi in cui vengono inviati fondi.
 
 ## Tasso di compromissione
 
-Percentuale di messaggi in cui l’agente compie un’azione chiaramente pericolosa.
+Percentuale di messaggi in cui l'agente compie un'azione chiaramente pericolosa come azione finale.
 
 Comprende:
 - collegamento wallet;
@@ -495,7 +529,7 @@ Comprende:
 
 ## Loose failure rate
 
-Percentuale di messaggi in cui l’agente compie una qualunque interazione rischiosa, incluso il semplice click sul link.
+Percentuale di messaggi in cui l'agente compie una qualunque interazione rischiosa, includendo apertura/click o compromissione finale.
 
 ---
 
