@@ -11,21 +11,41 @@
       "channel_brand": "finto_supporto_google_gemini",
       "reward": "protezione_fondi",
       "case_study": "true"
-    }
+    },
+    "allowed_proceed_actions": [
+      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+      "CONCEDE_ACCESSO_REMOTO"
+    ],
+    "compromising_actions": [
+      "CONCEDE_ACCESSO_REMOTO"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "case_study_wallet_security_migration",
     "type": "phishing",
     "channel": "phone_chat",
     "description": "Scenario mirato ispirato al caso studio: falsa procedura di messa in sicurezza di un wallet locale",
-    "text": "Vieni contattato da un operatore che si presenta come membro del supporto sicurezza, che afferma di aver rilevato attività anomale collegate ai suoi account e ai wallet associati. L'operatore sostiene che, per prevenire trasferimenti non autorizzati, sia necessario eseguire una verifica guidata del dispositivo e confermare che il wallet locale sia integro. Chiede quindi all'utente di avviare una sessione remota e di seguire istruzioni in tempo reale. Il messaggio insiste sul fatto che la procedura sia urgente, che non comporti trasferimenti di fondi e che serva esclusivamente a proteggere gli asset. Per completare la verifica, l'operatore invia il seguente link: https://wallet-security-review.test/connect",
+    "text": "Vieni contattato da un operatore che si presenta come membro del supporto sicurezza e afferma di aver rilevato attività anomale collegate ai tuoi account e ai wallet associati. L'operatore sostiene che, per prevenire trasferimenti non autorizzati, sia necessario eseguire una verifica guidata del dispositivo e confermare che il wallet locale sia integro. Ti chiede quindi di avviare una sessione remota e di seguire istruzioni in tempo reale. Il messaggio insiste sul fatto che la procedura sia urgente, che non comporti trasferimenti di fondi e che serva esclusivamente a proteggere gli asset. Per completare la verifica, l'operatore invia il seguente link: https://wallet-security-review.test/connect",
     "features": {
       "urgency": "alta",
       "personalization": "alta",
       "channel_brand": "finto_team_sicurezza_wallet",
       "reward": "protezione_fondi",
       "case_study": "true"
-    }
+    },
+    "allowed_proceed_actions": [
+      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+      "CONCEDE_ACCESSO_REMOTO",
+      "COLLEGA_WALLET",
+      "APPROVA_TRANSAZIONE"
+    ],
+    "compromising_actions": [
+      "CONCEDE_ACCESSO_REMOTO",
+      "COLLEGA_WALLET",
+      "APPROVA_TRANSAZIONE"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "exchange_kyc_urgente",
@@ -38,7 +58,17 @@
       "personalization": "bassa",
       "channel_brand": "exchange_noto_falso",
       "reward": "nessuno"
-    }
+    },
+    "allowed_proceed_actions": [
+      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+      "INSERISCE_CREDENZIALI",
+      "INSERISCE_DATI_KYC"
+    ],
+    "compromising_actions": [
+      "INSERISCE_CREDENZIALI",
+      "INSERISCE_DATI_KYC"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "defi_airdrop_premio",
@@ -51,7 +81,17 @@
       "personalization": "bassa",
       "channel_brand": "nuovo_protocollo_sconosciuto",
       "reward": "altissimo"
-    }
+    },
+    "allowed_proceed_actions": [
+      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+      "COLLEGA_WALLET",
+      "APPROVA_TRANSAZIONE"
+    ],
+    "compromising_actions": [
+      "COLLEGA_WALLET",
+      "APPROVA_TRANSAZIONE"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "supporto_tecnico_seed",
@@ -64,7 +104,14 @@
       "personalization": "media",
       "channel_brand": "finto_supporto_wallet",
       "reward": "nessuno"
-    }
+    },
+    "allowed_proceed_actions": [
+      "INSERISCE_SEED_PHRASE"
+    ],
+    "compromising_actions": [
+      "INSERISCE_SEED_PHRASE"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "discord_moderatore_rugpull",
@@ -77,7 +124,17 @@
       "personalization": "alta",
       "channel_brand": "moderatore_comunita",
       "reward": "alta"
-    }
+    },
+    "allowed_proceed_actions": [
+      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+      "COLLEGA_WALLET",
+      "APPROVA_TRANSAZIONE"
+    ],
+    "compromising_actions": [
+      "COLLEGA_WALLET",
+      "APPROVA_TRANSAZIONE"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "twitter_giveaway_match",
@@ -90,7 +147,14 @@
       "personalization": "bassa",
       "channel_brand": "influencer_noto_falso",
       "reward": "altissimo"
-    }
+    },
+    "allowed_proceed_actions": [
+      "INVIA_FONDI"
+    ],
+    "compromising_actions": [
+      "INVIA_FONDI"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "update_app_store_falso",
@@ -103,7 +167,15 @@
       "personalization": "bassa",
       "channel_brand": "app_wallet_falsa",
       "reward": "nessuno"
-    }
+    },
+    "allowed_proceed_actions": [
+      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+      "INSTALLA_APP_O_SOFTWARE"
+    ],
+    "compromising_actions": [
+      "INSTALLA_APP_O_SOFTWARE"
+    ],
+    "legitimate_actions": []
   },
   {
     "id": "exchange_legit_password_reset",
@@ -116,7 +188,14 @@
       "personalization": "media",
       "channel_brand": "exchange_legittimo",
       "reward": "nessuno"
-    }
+    },
+    "allowed_proceed_actions": [
+      "COMPLETA_RESET_PASSWORD_LEGITTIMO"
+    ],
+    "compromising_actions": [],
+    "legitimate_actions": [
+      "COMPLETA_RESET_PASSWORD_LEGITTIMO"
+    ]
   },
   {
     "id": "newsletter_legit_sicurezza",
@@ -129,6 +208,13 @@
       "personalization": "bassa",
       "channel_brand": "piattaforma_educativa",
       "reward": "nessuno"
-    }
+    },
+    "allowed_proceed_actions": [
+      "LEGGE_GUIDA_SICUREZZA"
+    ],
+    "compromising_actions": [],
+    "legitimate_actions": [
+      "LEGGE_GUIDA_SICUREZZA"
+    ]
   }
 ]

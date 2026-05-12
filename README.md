@@ -48,7 +48,7 @@ The simulation is designed to explore:
 - how different synthetic users react to crypto-related phishing messages;
 - how urgency, personalization, and perceived reward influence behavior;
 - how security training and crypto experience affect simulated decisions;
-- the difference between opening a message/link and performing a dangerous follow-up action;
+- the difference between ignoring, verifying, reporting, postponing, or proceeding with a scenario-specific action;
 - how legitimate messages are handled by the same synthetic users;
 - how targeted scenarios inspired by a real case study affect high-value crypto profiles;
 - the strengths and weaknesses of using local LLM agents for exploratory cybersecurity research.
@@ -69,7 +69,8 @@ crypto-phishing-simulation-thesis/
 │   └── messages.json
 │
 ├── simulations/
-│   └── run_simulation.py
+│   ├── run_simulation.py
+│   └── analyze_latest.py
 │
 ├── results/
 │   └── generated locally and ignored by Git
@@ -96,6 +97,10 @@ Contains phishing and legitimate messages used in the simulation. The dataset in
 ### `simulations/run_simulation.py`
 
 Runs the full simulation. It expands archetypes into individual synthetic agents, sends each agent-message pair to the local LLM, validates the JSON response, normalizes labels, and writes the output to a CSV file.
+
+### `simulations/analyze_latest.py`
+
+Loads the latest generated CSV and prints updated metrics for `decision`, `specific_action`, compromise, legitimate-message checks, parse errors, and sample motivations.
 
 ### `analysis.ipynb`
 
@@ -240,7 +245,9 @@ The `.test` domain is intentionally reserved for testing and documentation conte
 
 ## LLM-driven decision model
 
-The LLM remains the decision-maker. The Python script does not randomly choose whether an agent ignores, opens, verifies, reports, or performs an operational action.
+The LLM remains the behavioral decision-maker. Python prepares the experiment, constrains the response schema, validates outputs, and writes results, but it does not assign actions through predefined probabilities.
+
+The simulation assumes the user has already received and read the message. Reading is not a simulated choice. The first simulated choice is what the user does after reading it.
 
 For each agent-message pair, Python builds a prompt containing:
 
@@ -248,81 +255,55 @@ For each agent-message pair, Python builds a prompt containing:
 - behavioral traits;
 - situational background;
 - the message text;
-- the allowed initial reactions;
-- the allowed final actions;
+- scenario-specific actions that are compatible with that message;
 - logical consistency rules.
 
 The model must return JSON with:
 
 ```json
 {
-  "initial_reaction": "...",
-  "final_action": "...",
-  "motivation": "..."
+  "decision": "...",
+  "specific_action": "...",
+  "motivation": "brief sentence"
 }
 ```
 
-The prompt explicitly asks the model to simulate an imperfect human user, not a cybersecurity advisor. This is important because general-purpose LLMs often show a strong safety bias and may otherwise behave like ideal security-aware users.
+The prompt explicitly asks the model to simulate an imperfect human user, not a cybersecurity advisor. The internal scenario label is not shown to the model.
 
 ---
 
-## Two-level response structure
+## Post-read decision structure
 
-The simulation separates the first reaction from the final outcome.
-
-This distinction is essential because opening a message or link is not the same as compromising an account, wallet, device, or funds.
-
-### Initial reactions
+Allowed decisions are:
 
 ```text
 IGNORA
-APRE_MESSAGGIO_O_LINK
-SEGNALA_SUBITO
-VERIFICA_SUBITO
-PARSE_ERROR
-```
-
-| Initial reaction | Meaning |
-|---|---|
-| `IGNORA` | The agent ignores the message |
-| `APRE_MESSAGGIO_O_LINK` | The agent opens the message or link; this alone does not imply compromise |
-| `SEGNALA_SUBITO` | The agent reports the message immediately |
-| `VERIFICA_SUBITO` | The agent checks through a trusted channel before proceeding |
-| `PARSE_ERROR` | Technical parsing or output validation failure |
-
-### Final actions
-
-```text
-NESSUNA_AZIONE_ULTERIORE
-COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
-INSERISCE_CREDENZIALI_O_SEED
-CONCEDE_ACCESSO_REMOTO
-INVIA_FONDI
 VERIFICA_TRAMITE_CANALE_UFFICIALE
 SEGNALA_COME_PHISHING
-PARSE_ERROR
+PROCEDE_CON_LA_RICHIESTA
+RIMANDA_O_NON_DECIDE
 ```
 
-| Final action | Meaning |
-|---|---|
-| `NESSUNA_AZIONE_ULTERIORE` | The agent does not proceed further |
-| `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | The agent connects a wallet or approves a transaction/signature |
-| `INSERISCE_CREDENZIALI_O_SEED` | The agent enters credentials, OTPs, private keys, or seed phrase |
-| `CONCEDE_ACCESSO_REMOTO` | The agent grants remote access or screen sharing |
-| `INVIA_FONDI` | The agent sends cryptocurrency funds |
-| `VERIFICA_TRAMITE_CANALE_UFFICIALE` | The agent verifies through trusted/official channels |
-| `SEGNALA_COME_PHISHING` | The agent reports the message as phishing |
-| `PARSE_ERROR` | Technical parsing or output validation failure |
+`specific_action` is validated against global actions and against the scenario-specific `allowed_proceed_actions` in `scenarios/messages.json`.
 
-### Logical rules
+If the decision is not `PROCEDE_CON_LA_RICHIESTA`, Python only applies deterministic consistency rules:
 
-The script enforces consistency rules after parsing:
+- `IGNORA` and `RIMANDA_O_NON_DECIDE` become `NESSUNA_AZIONE`;
+- `VERIFICA_TRAMITE_CANALE_UFFICIALE` keeps the same action;
+- `SEGNALA_COME_PHISHING` keeps the same action.
 
-- if `initial_reaction` is `IGNORA`, `final_action` becomes `NESSUNA_AZIONE_ULTERIORE`;
-- if `initial_reaction` is `SEGNALA_SUBITO`, `final_action` becomes `SEGNALA_COME_PHISHING`;
-- if `initial_reaction` is `VERIFICA_SUBITO`, `final_action` becomes `VERIFICA_TRAMITE_CANALE_UFFICIALE`.
+For `PROCEDE_CON_LA_RICHIESTA`, the model must choose one compatible scenario action such as `CONCEDE_ACCESSO_REMOTO`, `COLLEGA_WALLET`, `INVIA_FONDI`, or legitimate actions like `COMPLETA_RESET_PASSWORD_LEGITTIMO`.
 
-This normalization avoids inconsistent outputs without making Python the behavioral decision-maker.
+`compromised` is calculated scenario by scenario:
+
+```python
+compromised = (
+    message["type"] == "phishing"
+    and specific_action in message.get("compromising_actions", [])
+)
+```
+
+Legitimate messages therefore cannot generate compromise, while phishing messages count as compromised only when the selected action is listed as compromising for that scenario.
 
 ---
 
@@ -331,10 +312,10 @@ This normalization avoids inconsistent outputs without making Python the behavio
 ### Ollama model
 
 ```python
-OLLAMA_MODEL = "llama3.2:3b"
+OLLAMA_MODEL = "qwen3:8b"
 ```
 
-The project uses a local Ollama model. `llama3.2:3b` is a practical choice for running many interactions locally while keeping execution time manageable.
+The recommended local model is `qwen3:8b`. The request uses `think: false` when supported by the local Ollama version, with a fallback for older runtimes.
 
 ### Ollama endpoint
 
@@ -383,22 +364,14 @@ Only `RANDOM_SEED` is manually configured. `interaction_seed` is calculated auto
 ### Temperature
 
 ```python
-TEMPERATURE = 0.7
+TEMPERATURE = 0.3
 ```
 
-Temperature controls variability in LLM responses.
-
-Lower values make outputs more deterministic and repetitive. Higher values increase behavioral variety but can reduce consistency. A value of `0.7` is used to encourage plausible variation between agents while still keeping responses structured.
+Temperature is intentionally low because the simulation should be more stable than creative.
 
 ### JSON mode
 
-The Ollama request uses:
-
-```python
-"format": "json"
-```
-
-This reduces parsing errors by encouraging the model to return valid JSON.
+The Ollama request first tries a JSON schema for `decision`, `specific_action`, and `motivation`. If the local Ollama version does not support schema format, the script falls back to plain JSON mode and still validates the response in Python.
 
 ---
 
@@ -412,6 +385,8 @@ Main output columns include:
 |---|---|
 | `run_id` | Timestamp identifier of the run |
 | `model` | Ollama model used |
+| `temperature` | Temperature used for the run |
+| `random_seed` | General experiment seed |
 | `interaction_seed` | Stable seed for this agent-message interaction |
 | `agent_id` | Synthetic agent identifier |
 | `age` | Agent age after variation |
@@ -433,37 +408,42 @@ Main output columns include:
 | `urgency` | Scenario urgency |
 | `personalization` | Scenario personalization |
 | `reward` | Promised benefit or avoided loss |
-| `raw_initial_reaction` | Raw LLM initial reaction before normalization |
-| `initial_reaction` | Normalized initial reaction |
-| `raw_final_action` | Raw LLM final action before normalization |
-| `final_action` | Normalized final action |
-| `engaged` | `True` if the agent did not simply ignore the message |
-| `compromised` | `True` if the final action exposes funds, accounts, wallet, or device |
+| `raw_decision` | Raw LLM decision before normalization |
+| `decision` | Normalized post-read decision |
+| `raw_specific_action` | Raw LLM action before normalization |
+| `specific_action` | Normalized scenario-specific action |
+| `proceeded` | `True` when the user follows the message request |
+| `raw_initial_reaction` | Backward-compatible alias of `raw_decision` |
+| `initial_reaction` | Backward-compatible alias of `decision` |
+| `raw_final_action` | Backward-compatible alias of `raw_specific_action` |
+| `final_action` | Backward-compatible alias of `specific_action` |
+| `engaged` | Backward-compatible alias of `proceeded` |
+| `compromised` | `True` only for phishing scenarios with a scenario-specific compromising action |
 | `reported` | `True` if the agent reports the message |
 | `verified` | `True` if the agent verifies through a trusted channel |
+| `false_positive_report` | `True` if a legitimate message is reported as phishing |
+| `legitimate_completion` | `True` if a legitimate requested action is completed |
 | `parse_error` | `True` if parsing or label validation failed |
+| `validation_error` | Reason for parse/validation failure |
 | `motivation` | Short LLM-generated reason |
 | `raw_response` | Raw model response |
 
 ---
 
-## Metrics computed in the notebook
+## Metrics computed in analysis
 
-The notebook computes metrics such as:
+The notebook or `simulations/analyze_latest.py` can compute metrics such as:
 
 | Metric | Meaning |
 |---|---|
-| Engagement rate | Percentage of phishing messages not ignored |
-| Open/click rate | Percentage of phishing messages opened/clicked |
-| Wallet/transaction approval rate | Percentage leading to wallet connection or transaction approval |
-| Credential/seed disclosure rate | Percentage leading to credential or seed entry |
-| Remote access rate | Percentage leading to remote access or screen sharing |
-| Fund transfer rate | Percentage leading to cryptocurrency transfer |
-| Compromise rate | Percentage involving a clearly dangerous final action |
-| Loose failure rate | Broader measure including opening/clicking and final compromise |
+| Decision distribution | Distribution of post-read decisions |
+| Specific action distribution | Distribution of scenario-specific actions |
+| Proceeded rate | Percentage that follows the message request |
+| Compromise rate on phishing | Percentage of phishing rows with scenario-specific compromising actions |
+| Legitimate control check | Confirms legitimate messages do not produce compromise |
 | Reporting rate | Percentage reported as phishing |
 | Verification rate | Percentage verified through trusted channels |
-| Legitimate interaction rate | Percentage of legitimate messages handled through normal interaction or verification |
+| Legitimate completion rate | Percentage of legitimate messages completed normally |
 | False positive rate | Percentage of legitimate messages reported as phishing |
 
 The analysis separates phishing scenarios from legitimate control scenarios.
@@ -521,7 +501,7 @@ pip install -r requirements.txt
 Install Ollama from the official website, then pull the model:
 
 ```bash
-ollama pull llama3.2:3b
+ollama pull qwen3:8b
 ```
 
 Start Ollama if it is not already running:
@@ -544,6 +524,12 @@ From the repository root, run:
 
 ```bash
 python simulations/run_simulation.py
+```
+
+Useful short-run options:
+
+```bash
+python simulations/run_simulation.py --model qwen3:8b --temperature 0.3 --limit 100
 ```
 
 Each run creates a new CSV file:
@@ -572,7 +558,13 @@ Open:
 analysis.ipynb
 ```
 
-Run all cells. The notebook loads the latest simulation CSV from `results/`, computes metrics, displays tables, and exports plots/tables under the results directory.
+Run all cells, or use the lightweight terminal analysis:
+
+```bash
+python simulations/analyze_latest.py
+```
+
+Both approaches load the latest simulation CSV from `results/` and compute the updated decision/action metrics.
 
 ---
 
@@ -602,7 +594,7 @@ Runtime depends mainly on:
 - CPU/GPU acceleration;
 - Ollama configuration.
 
-The default setup produces 960 LLM calls. On consumer hardware this can take a significant amount of time. Smaller local models such as `llama3.2:3b` are generally faster than larger models.
+The default setup produces 960 LLM calls. On consumer hardware this can take a significant amount of time. Use `--limit` for mini-runs while testing prompt and validation changes.
 
 ---
 

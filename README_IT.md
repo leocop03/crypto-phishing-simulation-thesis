@@ -50,7 +50,7 @@ La simulazione serve a osservare:
 - come profili utente diversi reagiscono a messaggi di phishing crypto;
 - quanto incidono urgenza, personalizzazione e promessa di ricompensa;
 - come cambiano le risposte in base a formazione sulla sicurezza ed esperienza crypto;
-- la differenza tra aprire un messaggio/link e compiere un'azione davvero pericolosa;
+- la differenza tra ignorare, verificare, segnalare, rimandare o procedere con un'azione specifica dello scenario;
 - come vengono trattati i messaggi legittimi di controllo;
 - come si comportano gli agenti davanti a scenari mirati ispirati al caso studio;
 - quali limiti emergono usando agenti LLM per simulare comportamenti umani in cybersecurity.
@@ -71,7 +71,8 @@ crypto-phishing-simulation-thesis/
 │   └── messages.json
 │
 ├── simulations/
-│   └── run_simulation.py
+│   ├── run_simulation.py
+│   └── analyze_latest.py
 │
 ├── results/
 │   └── generata localmente e ignorata da Git
@@ -98,6 +99,10 @@ Contiene i messaggi usati nella simulazione. Ci sono scenari di phishing crypto,
 ### `simulations/run_simulation.py`
 
 È il motore della simulazione. Espande gli archetipi in agenti sintetici, manda ogni coppia agente-messaggio al modello locale, controlla la risposta JSON, normalizza le etichette e salva tutto in CSV.
+
+### `simulations/analyze_latest.py`
+
+Carica l'ultimo CSV generato e stampa metriche aggiornate su `decision`, `specific_action`, compromissione, controlli sui messaggi legittimi, parse error e campioni di motivazioni.
 
 ### `analysis.ipynb`
 
@@ -242,7 +247,9 @@ I domini `.test` servono quindi a mantenere il progetto sicuro, pur conservando 
 
 ## Decisione guidata dall'LLM
 
-La decisione dell'agente viene presa dall'LLM. Python non sceglie con percentuali predefinite se un utente ignora, apre, verifica, segnala o procede con un'azione operativa.
+La decisione dell'agente viene presa dall'LLM. Python prepara l'esperimento, vincola lo schema della risposta, valida gli output e salva i risultati, ma non decide con percentuali predefinite quale azione deve compiere l'utente.
+
+La simulazione parte dal presupposto che l'utente abbia gia ricevuto e letto il messaggio. La lettura non e una scelta simulata. La prima scelta simulata e cosa fa dopo la lettura.
 
 Per ogni coppia agente-messaggio, Python costruisce un prompt con:
 
@@ -250,81 +257,55 @@ Per ogni coppia agente-messaggio, Python costruisce un prompt con:
 - tratti comportamentali;
 - situazione personale del momento;
 - testo del messaggio;
-- reazioni iniziali ammesse;
-- azioni finali ammesse;
+- azioni compatibili con quello scenario;
 - regole logiche di coerenza.
 
 Il modello deve rispondere in JSON:
 
 ```json
 {
-  "initial_reaction": "...",
-  "final_action": "...",
-  "motivation": "..."
+  "decision": "...",
+  "specific_action": "...",
+  "motivation": "frase breve"
 }
 ```
 
-Il prompt specifica che il modello non deve comportarsi come un consulente di cybersecurity, ma deve impersonare un utente umano imperfetto. Questo è importante perché molti LLM tendono spontaneamente a dare risposte molto sicure e razionali, anche quando si sta chiedendo loro di simulare un comportamento umano sotto pressione.
+Il prompt specifica che il modello non deve comportarsi come un consulente di cybersecurity, ma deve impersonare un utente umano imperfetto. L'etichetta interna dello scenario non viene mostrata al modello.
 
 ---
 
-## Risposta a due livelli
+## Decisione dopo la lettura
 
-La simulazione separa la prima reazione dall'esito finale.
-
-Questa distinzione è fondamentale: aprire un messaggio o un link non significa automaticamente compromettere account, wallet, dispositivo o fondi.
-
-### Reazioni iniziali
+Le decisioni ammesse sono:
 
 ```text
 IGNORA
-APRE_MESSAGGIO_O_LINK
-SEGNALA_SUBITO
-VERIFICA_SUBITO
-PARSE_ERROR
-```
-
-| Reazione iniziale | Significato |
-|---|---|
-| `IGNORA` | L'agente ignora il messaggio |
-| `APRE_MESSAGGIO_O_LINK` | L'agente apre il messaggio o il link; da sola non è una compromissione |
-| `SEGNALA_SUBITO` | L'agente segnala subito il messaggio |
-| `VERIFICA_SUBITO` | L'agente verifica tramite canali affidabili prima di procedere |
-| `PARSE_ERROR` | Errore tecnico di parsing o validazione |
-
-### Azioni finali
-
-```text
-NESSUNA_AZIONE_ULTERIORE
-COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
-INSERISCE_CREDENZIALI_O_SEED
-CONCEDE_ACCESSO_REMOTO
-INVIA_FONDI
 VERIFICA_TRAMITE_CANALE_UFFICIALE
 SEGNALA_COME_PHISHING
-PARSE_ERROR
+PROCEDE_CON_LA_RICHIESTA
+RIMANDA_O_NON_DECIDE
 ```
 
-| Azione finale | Significato |
-|---|---|
-| `NESSUNA_AZIONE_ULTERIORE` | L'agente non fa altro dopo la prima reazione |
-| `COLLEGA_WALLET_O_APPROVA_TRANSAZIONE` | Collega un wallet o approva una transazione/firma |
-| `INSERISCE_CREDENZIALI_O_SEED` | Inserisce credenziali, codici OTP, chiavi private o seed phrase |
-| `CONCEDE_ACCESSO_REMOTO` | Concede accesso remoto o condivisione schermo |
-| `INVIA_FONDI` | Invia criptovalute |
-| `VERIFICA_TRAMITE_CANALE_UFFICIALE` | Verifica tramite canali affidabili o ufficiali |
-| `SEGNALA_COME_PHISHING` | Segnala il messaggio come phishing |
-| `PARSE_ERROR` | Errore tecnico di parsing o validazione |
+`specific_action` viene validata sia rispetto alle azioni globali sia rispetto alle `allowed_proceed_actions` specifiche dello scenario in `scenarios/messages.json`.
 
-### Regole di coerenza
+Se la decisione non e `PROCEDE_CON_LA_RICHIESTA`, Python applica solo regole deterministiche di coerenza:
 
-Dopo la risposta del modello, lo script applica alcune regole di coerenza:
+- `IGNORA` e `RIMANDA_O_NON_DECIDE` diventano `NESSUNA_AZIONE`;
+- `VERIFICA_TRAMITE_CANALE_UFFICIALE` mantiene la stessa azione;
+- `SEGNALA_COME_PHISHING` mantiene la stessa azione.
 
-- se `initial_reaction` è `IGNORA`, allora `final_action` diventa `NESSUNA_AZIONE_ULTERIORE`;
-- se `initial_reaction` è `SEGNALA_SUBITO`, allora `final_action` diventa `SEGNALA_COME_PHISHING`;
-- se `initial_reaction` è `VERIFICA_SUBITO`, allora `final_action` diventa `VERIFICA_TRAMITE_CANALE_UFFICIALE`.
+Per `PROCEDE_CON_LA_RICHIESTA`, il modello deve scegliere una sola azione compatibile con lo scenario, per esempio `CONCEDE_ACCESSO_REMOTO`, `COLLEGA_WALLET`, `INVIA_FONDI` oppure azioni legittime come `COMPLETA_RESET_PASSWORD_LEGITTIMO`.
 
-Questa normalizzazione evita combinazioni incoerenti, ma non trasforma Python nel decisore comportamentale.
+`compromised` viene calcolato scenario per scenario:
+
+```python
+compromised = (
+    message["type"] == "phishing"
+    and specific_action in message.get("compromising_actions", [])
+)
+```
+
+I messaggi legittimi quindi non possono generare compromissione. Nei messaggi di phishing, invece, la compromissione viene conteggiata solo se l'azione scelta e tra quelle compromettenti per quello scenario.
 
 ---
 
@@ -333,10 +314,10 @@ Questa normalizzazione evita combinazioni incoerenti, ma non trasforma Python ne
 ### Modello Ollama
 
 ```python
-OLLAMA_MODEL = "llama3.2:3b"
+OLLAMA_MODEL = "qwen3:8b"
 ```
 
-Il progetto usa un modello locale tramite Ollama. `llama3.2:3b` è una scelta pratica perché permette di eseguire molte interazioni in tempi ragionevoli anche su hardware consumer.
+Il modello locale consigliato è `qwen3:8b`. La richiesta usa `think: false` quando supportato dalla versione locale di Ollama, con fallback per runtime più vecchi.
 
 ### Endpoint Ollama
 
@@ -385,22 +366,14 @@ L'unica seed da impostare manualmente è `RANDOM_SEED`. La `interaction_seed` vi
 ### Temperature
 
 ```python
-TEMPERATURE = 0.7
+TEMPERATURE = 0.3
 ```
 
-La temperature controlla quanto il modello può variare le sue risposte.
-
-Valori più bassi rendono le risposte più deterministiche e ripetitive. Valori più alti aumentano la varietà, ma possono ridurre la coerenza. Il valore `0.7` cerca un equilibrio: abbastanza variabilità da simulare comportamenti diversi, ma senza rendere le risposte troppo instabili.
+La temperature è volutamente bassa: la simulazione deve essere più stabile che creativa.
 
 ### Modalità JSON
 
-La richiesta a Ollama usa:
-
-```python
-"format": "json"
-```
-
-Questo aiuta il modello a restituire risposte strutturate e riduce gli errori di parsing.
+La richiesta a Ollama prova prima uno schema JSON per `decision`, `specific_action` e `motivation`. Se la versione locale di Ollama non supporta lo schema, lo script usa il fallback a JSON semplice e mantiene comunque la validazione Python.
 
 ---
 
@@ -414,6 +387,8 @@ Le colonne principali sono:
 |---|---|
 | `run_id` | Identificativo temporale della simulazione |
 | `model` | Modello Ollama usato |
+| `temperature` | Temperature usata per la run |
+| `random_seed` | Seed generale dell'esperimento |
 | `interaction_seed` | Seed stabile della specifica interazione agente-messaggio |
 | `agent_id` | Identificativo dell'agente sintetico |
 | `age` | Età dopo la variazione |
@@ -435,37 +410,42 @@ Le colonne principali sono:
 | `urgency` | Urgenza del messaggio |
 | `personalization` | Personalizzazione del messaggio |
 | `reward` | Ricompensa promessa o danno evitato |
-| `raw_initial_reaction` | Reazione iniziale grezza prodotta dal modello |
-| `initial_reaction` | Reazione iniziale normalizzata |
-| `raw_final_action` | Azione finale grezza prodotta dal modello |
-| `final_action` | Azione finale normalizzata |
-| `engaged` | `True` se l'agente non ha semplicemente ignorato il messaggio |
-| `compromised` | `True` se l'azione finale espone fondi, account, wallet o dispositivo |
+| `raw_decision` | Decisione grezza prodotta dal modello |
+| `decision` | Decisione dopo la lettura, normalizzata |
+| `raw_specific_action` | Azione specifica grezza prodotta dal modello |
+| `specific_action` | Azione specifica normalizzata e compatibile con lo scenario |
+| `proceeded` | `True` se l'utente segue la richiesta del messaggio |
+| `raw_initial_reaction` | Alias retrocompatibile di `raw_decision` |
+| `initial_reaction` | Alias retrocompatibile di `decision` |
+| `raw_final_action` | Alias retrocompatibile di `raw_specific_action` |
+| `final_action` | Alias retrocompatibile di `specific_action` |
+| `engaged` | Alias retrocompatibile di `proceeded` |
+| `compromised` | `True` solo per phishing con azione compromettente per quello scenario |
 | `reported` | `True` se l'agente segnala il messaggio |
 | `verified` | `True` se l'agente verifica tramite canali affidabili |
+| `false_positive_report` | `True` se un messaggio legittimo viene segnalato come phishing |
+| `legitimate_completion` | `True` se una richiesta legittima viene completata |
 | `parse_error` | `True` se c'è stato un errore di parsing o validazione |
+| `validation_error` | Motivo dell'errore di parsing/validazione |
 | `motivation` | Motivazione sintetica generata dal modello |
 | `raw_response` | Risposta grezza del modello |
 
 ---
 
-## Metriche calcolate nel notebook
+## Metriche calcolate nell'analisi
 
-Il notebook calcola diverse metriche, tra cui:
+Il notebook oppure `simulations/analyze_latest.py` possono calcolare diverse metriche, tra cui:
 
 | Metrica | Significato |
 |---|---|
-| Tasso di interazione | Percentuale di messaggi phishing non ignorati |
-| Tasso di apertura/click | Percentuale di messaggi phishing aperti/cliccati |
-| Tasso di collegamento wallet/approvazione transazione | Percentuale di casi in cui l'agente collega il wallet o approva una transazione |
-| Tasso di inserimento credenziali/seed | Percentuale di casi in cui vengono inserite credenziali, seed o informazioni sensibili |
-| Tasso di accesso remoto | Percentuale di casi in cui viene concesso accesso remoto o condivisione schermo |
-| Tasso di invio fondi | Percentuale di casi in cui vengono inviate criptovalute |
-| Tasso di azione compromettente | Percentuale di casi con un'azione finale chiaramente pericolosa |
-| Tasso di fallimento ampio | Misura più larga che include apertura/click e azioni compromettenti |
+| Distribuzione decisioni | Distribuzione delle decisioni dopo la lettura |
+| Distribuzione azioni specifiche | Distribuzione delle azioni compatibili con gli scenari |
+| Tasso di procedura | Percentuale di casi in cui l'utente segue la richiesta |
+| Compromissione sui phishing | Percentuale di phishing con azione compromettente per lo scenario |
+| Controllo legittimi | Verifica che i messaggi legittimi non producano compromissione |
 | Tasso di segnalazione | Percentuale di messaggi segnalati come phishing |
 | Tasso di verifica | Percentuale di messaggi verificati tramite canali affidabili |
-| Tasso di interazione legittima | Percentuale di messaggi legittimi gestiti tramite apertura normale o verifica |
+| Completamento legittimo | Percentuale di messaggi legittimi completati normalmente |
 | Falsi positivi | Percentuale di messaggi legittimi segnalati come phishing |
 
 L'analisi separa sempre i messaggi di phishing dai messaggi legittimi.
@@ -523,7 +503,7 @@ pip install -r requirements.txt
 Dopo aver installato Ollama, scarica il modello:
 
 ```bash
-ollama pull llama3.2:3b
+ollama pull qwen3:8b
 ```
 
 Avvia Ollama se non è già attivo:
@@ -546,6 +526,12 @@ Dalla cartella principale del repository:
 
 ```bash
 python simulations/run_simulation.py
+```
+
+Opzioni utili per test brevi:
+
+```bash
+python simulations/run_simulation.py --model qwen3:8b --temperature 0.3 --limit 100
 ```
 
 Ogni esecuzione crea un nuovo file CSV:
@@ -574,7 +560,13 @@ Apri:
 analysis.ipynb
 ```
 
-Esegui tutte le celle. Il notebook carica il CSV più recente da `results/`, calcola le metriche, mostra tabelle e grafici, ed esporta i risultati nella cartella dei risultati.
+Esegui tutte le celle, oppure usa l'analisi leggera da terminale:
+
+```bash
+python simulations/analyze_latest.py
+```
+
+Entrambi caricano il CSV più recente da `results/` e calcolano le metriche aggiornate su decisioni e azioni specifiche.
 
 ---
 
@@ -604,7 +596,7 @@ Il tempo di esecuzione dipende soprattutto da:
 - uso di CPU/GPU;
 - configurazione di Ollama.
 
-La configurazione di default produce 960 chiamate al modello. Su hardware consumer può richiedere parecchio tempo. Modelli più piccoli, come `llama3.2:3b`, sono generalmente più veloci dei modelli più grandi.
+La configurazione di default produce 960 chiamate al modello. Su hardware consumer può richiedere parecchio tempo. Usa `--limit` per mini-run durante i test di prompt e validazione.
 
 ---
 
