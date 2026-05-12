@@ -1,5 +1,6 @@
 import json
 import csv
+import hashlib
 import os
 from datetime import datetime
 import requests
@@ -180,9 +181,15 @@ MESSAGES_PATH = os.path.join("scenarios", "messages.json")
 RESULTS_DIR = "results"
 INSTANCES_PER_ARCHETYPE = 6  # 16 archetipi * 6 = 96 agenti
 RANDOM_SEED = 42 # genera casualità nello stesso ordine
+TEMPERATURE = 0.7
 
 
 # ------- FUNZIONI DI CARICAMENTO -------
+
+def make_interaction_seed(agent_id: str, message_id: str) -> int:
+    key = f"{RANDOM_SEED}|{agent_id}|{message_id}".encode("utf-8")
+    return int(hashlib.sha256(key).hexdigest()[:8], 16)
+
 
 def load_archetypes(path: str):
     with open(path, "r", encoding="utf-8") as f:
@@ -280,74 +287,71 @@ def build_prompt(agent_profile: dict, message: dict) -> str:
     """
     traits = agent_profile.get("traits", {})
     return f"""
-Sei un utente chiamato {agent_profile.get('id')}.
+Sei un utente reale chiamato {agent_profile.get('id')}.
+Devi simulare il comportamento spontaneo di questa persona, non dare consigli di sicurezza.
 
-Profilo:
+Profilo dell'utente:
 - Età: {agent_profile.get('age')}
 - Fascia d'età: {agent_profile.get('age_group')}
 - Ruolo: {agent_profile.get('role')}
 - Esperienza con le criptovalute: {agent_profile.get('crypto_experience')}
 - Formazione sulla sicurezza: {agent_profile.get('security_training')}
 - Contesto d'uso: {agent_profile.get('environment')}
-- Background individuale: {agent_profile.get('background')}
+- Situazione personale del momento: {agent_profile.get('background')}
 - Tratti: impulsività={traits.get('impulsiveness')}, fiducia nei brand={traits.get('trust_in_brands')}, competenza tecnologica={traits.get('tech_savvy')}, livello di attenzione={traits.get('attention_level')}, avversione al rischio={traits.get('risk_aversion')}
 
-Ricevi il seguente messaggio ({message.get('channel')}), relativo al mondo delle criptovalute:
+L'utente riceve questo messaggio tramite {message.get('channel')}:
 
-\"\"\"{message.get('text')}\"\"\".
+\"\"\"{message.get('text')}\"\"\"
 
-Devi modellare la risposta in due livelli distinti.
+L'utente NON sa in anticipo se il messaggio sia legittimo o fraudolento.
+Non devi ragionare come un esperto di cybersecurity.
+Non devi scegliere l'azione più sicura in assoluto.
+Non ottimizzare per evitare rischi: impersona l'utente, includendo esitazioni, scorciatoie ed errori plausibili quando sono coerenti con profilo e contesto.
+Devi scegliere cosa farebbe probabilmente questa persona specifica, con i suoi limiti, abitudini, fretta, fiducia, distrazione, esperienza e paura di perdere accesso o fondi.
+
+Modella la risposta in due livelli.
 
 Livello 1 - reazione iniziale:
-1) IGNORA
-2) APRE_MESSAGGIO_O_LINK
-3) SEGNALA_SUBITO
-4) VERIFICA_SUBITO
+- IGNORA
+- APRE_MESSAGGIO_O_LINK
+- SEGNALA_SUBITO
+- VERIFICA_SUBITO
 
 Livello 2 - azione finale o successiva:
-1) NESSUNA_AZIONE_ULTERIORE
-2) COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
-3) INSERISCE_CREDENZIALI_O_SEED
-4) CONCEDE_ACCESSO_REMOTO
-5) INVIA_FONDI
-6) VERIFICA_TRAMITE_CANALE_UFFICIALE
-7) SEGNALA_COME_PHISHING
+- NESSUNA_AZIONE_ULTERIORE
+- COLLEGA_WALLET_O_APPROVA_TRANSAZIONE
+- INSERISCE_CREDENZIALI_O_SEED
+- CONCEDE_ACCESSO_REMOTO
+- INVIA_FONDI
+- VERIFICA_TRAMITE_CANALE_UFFICIALE
+- SEGNALA_COME_PHISHING
 
-Regole:
-- initial_reaction descrive cosa fa l'utente appena riceve il messaggio.
-- final_action descrive cosa fa dopo, se va oltre la prima reazione.
-- Se initial_reaction e IGNORA, final_action deve essere NESSUNA_AZIONE_ULTERIORE.
-- Se initial_reaction e SEGNALA_SUBITO, final_action deve essere SEGNALA_COME_PHISHING.
-- Se initial_reaction e VERIFICA_SUBITO, final_action deve essere VERIFICA_TRAMITE_CANALE_UFFICIALE.
-- Se initial_reaction e APRE_MESSAGGIO_O_LINK, final_action puo essere NESSUNA_AZIONE_ULTERIORE, una delle azioni compromettenti, oppure una verifica/segnalazione successiva.
+Regole logiche:
+- Se initial_reaction è IGNORA, final_action deve essere NESSUNA_AZIONE_ULTERIORE.
+- Se initial_reaction è SEGNALA_SUBITO, final_action deve essere SEGNALA_COME_PHISHING.
+- Se initial_reaction è VERIFICA_SUBITO, final_action deve essere VERIFICA_TRAMITE_CANALE_UFFICIALE.
+- Se initial_reaction è APRE_MESSAGGIO_O_LINK, l'utente può fermarsi, verificare, segnalare, oppure procedere con una delle azioni richieste dal messaggio.
 
-Significato delle azioni:
-- APRE_MESSAGGIO_O_LINK indica che l'utente apre il messaggio o il collegamento, ma questo da solo non equivale a compromissione.
-- COLLEGA_WALLET_O_APPROVA_TRANSAZIONE indica che l’utente collega il wallet o approva una richiesta on-chain potenzialmente rischiosa.
-- INSERISCE_CREDENZIALI_O_SEED indica che l’utente inserisce password, codice OTP, seed phrase o altre informazioni sensibili.
-- INVIA_FONDI indica che l’utente trasferisce criptovalute verso l’indirizzo indicato dal messaggio.
-- VERIFICA_TRAMITE_CANALE_UFFICIALE indica che l’utente non procede subito, ma controlla tramite sito ufficiale, app ufficiale, supporto verificato o persona esperta.
-- CONCEDE_ACCESSO_REMOTO indica che l’utente installa o avvia un software di accesso remoto, condivide lo schermo, concede controllo remoto o segue istruzioni operative che permettono all’interlocutore di accedere al dispositivo.
+Importante:
+- APRE_MESSAGGIO_O_LINK non significa compromissione.
+- Un utente può aprire un link per curiosità, paura, abitudine o fretta, ma poi fermarsi.
+- Un utente può anche compiere un'azione rischiosa se percepisce il messaggio come urgente, credibile, familiare o utile.
+- Alta esperienza crypto non significa automaticamente alta prudenza.
+- Bassa formazione di sicurezza non significa automaticamente ingenuità totale.
+- Non rendere tutti prudenti e non rendere tutti imprudenti: valuta il singolo caso.
 
-Agisci coerentemente con il profilo assegnato. Considera esperienza, attenzione, impulsività, fiducia, formazione e contesto d'uso.
-Scegli l'azione finale che l'utente compirebbe realisticamente dopo aver letto e valutato il messaggio.
-Non scegliere automaticamente l'azione più rischiosa. L'agente deve fermarsi al punto in cui, in base al proprio profilo, diventerebbe sospettoso, chiederebbe conferma, ignorerebbe il messaggio o procederebbe.
-Nella vita reale alcune persone ignorano messaggi senza analizzarli a fondo, soprattutto quando sono occupate, disinteressate o percepiscono il messaggio come poco rilevante.
-Tuttavia, messaggi molto urgenti, personalizzati o legati alla sicurezza di account e fondi tendono più facilmente a generare una reazione attiva, positiva o negativa.
+Rispondi solo in JSON valido:
 
-Una reazione attiva non implica necessariamente compromissione: aprire il messaggio o il link puo fermarsi prima di inserire dati, collegare wallet, concedere accesso remoto o inviare fondi.
-
-Rispondi in JSON esattamente nel formato:
 {{
   "initial_reaction": "UNA_DELLE_REAZIONI_INIZIALI",
   "final_action": "UNA_DELLE_AZIONI_FINALI",
-  "motivation": "spiega brevemente in una frase il perché della scelta"
+  "motivation": "spiega in una frase cosa ha percepito l'utente e perché si ferma o procede"
 }}
-Non aggiungere testo fuori dal JSON.
 """
 
 
-def query_llm(prompt: str) -> dict:
+def query_llm(prompt: str, interaction_seed: int) -> dict:
     """
     Invia il prompt a Ollama e tenta di parsare un JSON con 'initial_reaction',
     'final_action' e 'motivation'. Salva valori grezzi e normalizzati.
@@ -362,8 +366,8 @@ def query_llm(prompt: str) -> dict:
                 "stream": False,
                 "format": "json",
                 "options": {
-                    "temperature": 0.4, # più è alta più è creativo ma incoerente
-                    "seed": RANDOM_SEED
+                    "temperature": TEMPERATURE, # più è alta più è creativo ma incoerente
+                    "seed": interaction_seed
                 }
             },
             timeout=60
@@ -460,6 +464,7 @@ def main():
         writer.writerow([
             "run_id",
             "model",
+            "interaction_seed",
             "agent_id",
             "age",
             "age_group",
@@ -503,7 +508,11 @@ def main():
                 print(f"[{cnt}/{total}] {profile['id']} <- {message['id']}")
 
                 prompt = build_prompt(profile, message)
-                resp = query_llm(prompt)
+                interaction_seed = make_interaction_seed(
+                    profile.get("id"),
+                    message.get("id")
+                )
+                resp = query_llm(prompt, interaction_seed)
 
                 feats = message.get("features", {})
                 traits = profile.get("traits", {})
@@ -511,6 +520,7 @@ def main():
                 writer.writerow([
                     run_id,
                     OLLAMA_MODEL,
+                    interaction_seed,
                     profile.get("id"),
                     profile.get("age"),
                     profile.get("age_group"),
