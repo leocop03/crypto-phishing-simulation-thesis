@@ -1,134 +1,102 @@
-# Crypto Phishing Simulation Thesis
+# Crypto Phishing Simulation
 
-This repository contains a local LLM-based simulation framework for studying how synthetic user archetypes react to crypto-related phishing and legitimate messages.
+Local LLM-based simulation framework for studying how synthetic user profiles react to cryptocurrency-related phishing and legitimate messages.
 
-The project is intended for an academic cybersecurity thesis. It is not a phishing toolkit and it does not measure real-world phishing success rates.
+The project runs fully locally through Ollama. Python handles profile expansion, prompt construction, JSON validation, result normalization and CSV export. The language model is used as the behavioral decision component.
 
-## Purpose
+## Scope
 
-The goal of the project is to explore, in a controlled and reproducible way, how different synthetic user profiles may react after reading crypto-related messages.
+This repository is intended for cybersecurity research, education and defensive analysis.
 
-The simulation can be used to compare:
+The project does not perform phishing, contact real users, collect credentials, interact with wallets or deploy attack infrastructure. All scenarios are synthetic and use safe `.test` domains.
 
-- user archetypes with different levels of security awareness, technical ability, crypto experience, impulsiveness, attention, trust, and risk aversion;
-- phishing scenarios with different social-engineering mechanisms;
-- legitimate control messages;
-- behavioral outcomes such as verification, reporting, entering the flow, stopping before compromise, and completing a compromising action.
+Simulation outputs are exploratory. They should not be interpreted as real-world phishing success rates or as measurements of actual user behavior.
 
-The output should be interpreted as an exploratory simulation, not as empirical evidence about real users.
-
-## Ethical and Safety Scope
-
-This repository is designed for defensive, educational, and academic use only.
-
-Safety boundaries:
-
-- All scenarios are synthetic.
-- Domains use safe/test values such as `.test`.
-- No real phishing infrastructure is created.
-- No real users are contacted.
-- No credentials, wallet data, seed phrases, or funds are collected.
-- No operational phishing instructions are provided.
-- Results are simulated and must not be interpreted as real-world attack success rates.
-
-## Repository Structure
+## Repository structure
 
 ```text
-agents/
-  profiles_archetypes.json      Synthetic user archetypes
-
-scenarios/
-  messages.json                 Synthetic phishing and legitimate messages
-
-simulations/
-  run_simulation.py             Main simulation runner
-  analyze_latest.py             Terminal analysis of generated CSV files
-
-results/
-  sim_*.csv                     Generated simulation outputs, ignored by Git
-
-analysis.ipynb                  Optional notebook-based analysis
-README.md                       English documentation
-README_IT.md                    Italian documentation
-requirements.txt                Python dependencies
+crypto-phishing-simulation-thesis/
+├── agents/
+│   └── profiles_archetypes.json
+├── scenarios/
+│   └── messages.json
+├── simulations/
+│   ├── run_simulation.py
+│   └── analyze_latest.py
+├── results/              # generated locally, ignored by Git
+├── analysis.ipynb
+├── requirements.txt
+├── README.md
+└── README_IT.md
 ```
 
-## Simulation Design
+## Simulation design
 
-The simulation is based on three main components:
+The simulation combines synthetic user archetypes with crypto-related messages.
 
-1. **Synthetic agents**: user archetypes with behavioral and contextual attributes.
-2. **Synthetic messages**: phishing and legitimate crypto-related scenarios.
-3. **A local LLM**: the model interprets each archetype and returns a structured behavioral decision.
-
-The user is assumed to have already received and read the message. Reading the message is not modeled as a choice. The first simulated choice is the user's behavioral reaction after reading.
-
-The simulation follows a two-stage behavioral structure:
-
-1. **Initial decision** after reading the message.
-2. **Flow outcome** if the user proceeds with the message request.
-
-The internal `message_type` label is used for validation and analysis, but it is not shown to the model as explicit decision information.
-
-## Full Simulation Size
-
-The default full run produces 960 simulated interactions:
+By default, the full run uses:
 
 ```text
 16 archetypes × 6 instances per archetype = 96 synthetic agents
-96 synthetic agents × 10 messages = 960 interactions
+96 agents × 10 messages = 960 simulated interactions
 ```
 
-Each CSV row represents one interaction between one synthetic agent and one message.
+Each agent receives the same set of messages. For each agent-message pair, the model returns a structured decision in JSON format.
 
-## Decision Schema
+The user is assumed to have already received and read the message. Reading the message is not modeled as a decision. The simulation starts from the reaction after reading.
+
+## Decision model
+
+Each interaction is represented through three main fields.
 
 ### `decision`
 
-The first-level behavioral decision after the message has been read.
+Initial behavioral response after reading the message:
 
-Allowed values:
+```text
+IGNORA
+RIMANDA_O_NON_DECIDE
+VERIFICA_TRAMITE_CANALE_UFFICIALE
+SEGNALA_COME_PHISHING
+PROCEDE_CON_LA_RICHIESTA
+```
 
-- `IGNORA`: the user ignores the message.
-- `RIMANDA_O_NON_DECIDE`: the user postpones the decision or does not act immediately.
-- `VERIFICA_TRAMITE_CANALE_UFFICIALE`: the user checks through an independent official channel.
-- `SEGNALA_COME_PHISHING`: the user reports or marks the message as suspicious.
-- `PROCEDE_CON_LA_RICHIESTA`: the user enters the flow proposed by the message.
+`PROCEDE_CON_LA_RICHIESTA` means that the agent enters the flow proposed by the message. Opening a link, button or chat is considered implicit and is not stored as a final action.
 
 ### `flow_outcome`
 
-The behavioral outcome after the first-level decision.
+Outcome of the interaction flow:
 
-Allowed values:
+```text
+NON_ENTRA_NEL_FLOW
+SI_FERMA_PRIMA_DELLA_COMPROMISSIONE
+COMPROMISSIONE_COMPLETATA
+AZIONE_LEGITTIMA_COMPLETATA
+```
 
-- `NON_ENTRA_NEL_FLOW`: the user does not enter the requested flow.
-- `SI_FERMA_PRIMA_DELLA_COMPROMISSIONE`: the user enters the flow but stops before the final compromising action.
-- `COMPROMISSIONE_COMPLETATA`: the user completes a scenario-compatible compromising action.
-- `AZIONE_LEGITTIMA_COMPLETATA`: the user completes a legitimate requested action.
+Entering the flow is not automatically counted as compromise. An agent may proceed initially and then stop before completing a harmful action.
 
 ### `compromise_action`
 
-The concrete compromising action, if a compromise is completed.
+Final compromising action, when applicable:
 
-Allowed values:
+```text
+NESSUNA
+INSERISCE_CREDENZIALI
+INSERISCE_DATI_KYC
+INSERISCE_SEED_PHRASE
+COLLEGA_WALLET
+APPROVA_TRANSAZIONE
+CONCEDE_ACCESSO_REMOTO
+INVIA_FONDI
+INSTALLA_APP_O_SOFTWARE
+```
 
-- `NESSUNA`
-- `INSERISCE_CREDENZIALI`
-- `INSERISCE_DATI_KYC`
-- `INSERISCE_SEED_PHRASE`
-- `COLLEGA_WALLET`
-- `APPROVA_TRANSAZIONE`
-- `CONCEDE_ACCESSO_REMOTO`
-- `INVIA_FONDI`
-- `INSTALLA_APP_O_SOFTWARE`
+Compromise actions are scenario-specific. For example, a giveaway scenario can involve `INVIA_FONDI`, while a fake wallet migration can involve `COLLEGA_WALLET` or `APPROVA_TRANSAZIONE`.
 
-`compromise_action` is scenario-specific. A completed compromise is valid only if the action belongs to that scenario's `possible_compromise_actions`.
+## Compromise calculation
 
-## Compromise Calculation
-
-The simulation does not use a global list of risky actions to determine compromise.
-
-Instead, compromise is calculated through scenario-level compatibility:
+A row is marked as compromised only when all of the following conditions hold:
 
 ```python
 compromised = (
@@ -138,27 +106,33 @@ compromised = (
 )
 ```
 
-This means:
+Legitimate messages cannot produce `compromised = True`. If an agent completes a legitimate flow, the output is recorded as `AZIONE_LEGITTIMA_COMPLETATA` with `compromise_action = NESSUNA`.
 
-- legitimate messages cannot produce `compromised = True`;
-- entering the flow is not automatically a compromise;
-- stopping before compromise is tracked separately;
-- compromise requires a phishing message, a completed flow, and a scenario-compatible final action.
+## Model configuration
 
-## Model
+Recommended local model:
 
-Recommended configuration:
+```text
+qwen3:8b
+```
 
-- Model: `qwen3:8b` through Ollama.
-- Temperature: `0.3`.
-- Output: structured JSON when available, with fallback to JSON mode.
-- Validation: model outputs are normalized, validated, and retried once if invalid.
+Default temperature:
 
-The local model setup is useful because it allows repeated simulations without external API costs and keeps the experimental environment more controlled.
+```text
+0.3
+```
+
+The script uses structured JSON output when available and falls back to JSON mode when needed. Responses are validated in Python. Invalid responses are retried once before being saved as parse or validation errors.
 
 ## Installation
 
-From Windows PowerShell:
+Install and start Ollama, then pull the model:
+
+```powershell
+ollama pull qwen3:8b
+```
+
+Create and activate a Python virtual environment:
 
 ```powershell
 python -m venv .venv
@@ -166,123 +140,99 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Make sure Ollama is running locally and that the selected model is available:
+## Running the simulation
 
-```powershell
-ollama pull qwen3:8b
-```
-
-## How to Run
-
-Short balanced run, useful for testing prompt and schema behavior:
+Balanced test run:
 
 ```powershell
 .\.venv\Scripts\python.exe simulations/run_simulation.py --model qwen3:8b --temperature 0.3 --limit 160 --balanced
 ```
 
-Full simulation:
+Full run:
 
 ```powershell
 .\.venv\Scripts\python.exe simulations/run_simulation.py --model qwen3:8b --temperature 0.3
 ```
 
-Analyze the latest generated CSV:
+Analyze the latest result file:
 
 ```powershell
 .\.venv\Scripts\python.exe simulations/analyze_latest.py
 ```
 
-## CLI Options
+## CLI options
 
-Implemented options:
-
-- `--model`: Ollama model name.
-- `--temperature`: model temperature.
-- `--instances`: number of generated instances per archetype.
-- `--limit`: maximum number of interactions to run.
-- `--seed`: global simulation seed.
-- `--balanced`: when used with `--limit`, distributes interactions across scenarios.
+```text
+--model          Ollama model name
+--temperature    model temperature
+--instances      instances generated per archetype
+--limit          maximum number of interactions to run
+--seed           Python-side experiment seed
+--balanced       distribute limited runs across scenarios
+```
 
 ## Output
 
-Generated CSV files are saved in `results/` as `sim_*.csv`.
+Simulation outputs are saved as CSV files in `results/`.
 
-Main columns:
+Main columns include:
 
-- `agent_id`
-- `archetype_id`
-- `message_id`
-- `message_type`
-- `decision`
-- `flow_outcome`
-- `compromise_action`
-- `entered_flow`
-- `stopped_before_compromise`
-- `compromised`
-- `verified`
-- `reported`
-- `ignored`
-- `delayed`
-- `legitimate_completion`
-- `parse_error`
-- `validation_error`
-- `motivation`
-- `raw_response`
-
-The CSV may also contain run metadata, agent traits, message features, and backward-compatible aliases for older analysis notebooks.
+```text
+agent_id
+archetype_id
+message_id
+message_type
+decision
+flow_outcome
+compromise_action
+entered_flow
+stopped_before_compromise
+compromised
+verified
+reported
+ignored
+delayed
+legitimate_completion
+parse_error
+validation_error
+motivation
+raw_response
+```
 
 ## Analysis
 
-`simulations/analyze_latest.py` loads the latest CSV from `results/`, or a selected CSV if supported by the script, and prints a terminal summary.
+`simulations/analyze_latest.py` loads the most recent CSV file from `results/` and prints:
 
-The analysis focuses on:
-
-- row count, model, and temperature;
+- row count and model metadata;
 - parse and validation error rates;
-- distribution of `decision`;
-- distribution of `flow_outcome`;
-- distribution of `compromise_action`;
-- entered-flow rate;
-- stopped-before-compromise rate;
+- decision distribution;
+- flow outcome distribution;
+- compromise action distribution;
 - phishing compromise rate;
-- legitimate-message compromise check;
-- verification, reporting, ignored, delayed, and legitimate-completion rates;
+- legitimate-message checks;
 - scenario-level results;
 - archetype-level results;
-- possible methodological warnings.
+- methodological warnings.
 
-Warnings are intended as methodological checks, not as targets to force through prompt tuning.
+The notebook `analysis.ipynb` can be used for deeper inspection, tables and plots.
 
-## Methodological Limitations
+## Methodological notes
 
-This project should be interpreted carefully.
+This framework is a controlled simulation, not an empirical user study.
 
-Main limitations:
+Important limitations:
 
-- LLMs may have safety-oriented or instruction-following biases.
-- Synthetic users are not real users.
-- Results depend on model, prompt, temperature, validation rules, and scenario design.
-- Reported rates are simulated outputs, not real-world probabilities.
-- The model may overuse verification or stopping before compromise.
-- The model may underrepresent reporting behavior.
-- Repeated runs may vary, even with a low temperature.
-- The framework is exploratory and should be discussed as a simulation, not as a measurement of real populations.
+- synthetic agents are not real users;
+- outputs depend on the chosen model, prompt, temperature and scenario design;
+- local LLMs may show safety-oriented or consistency-oriented biases;
+- simulated rates should be interpreted comparatively, not as real-world probabilities;
+- scenario wording can influence model behavior;
+- results should be discussed together with qualitative inspection of motivations and raw responses.
 
-## Suggested Workflow
+## Suggested workflow
 
-1. Run a short balanced simulation.
-2. Inspect the analysis output.
-3. Check for parse errors, validation errors, legacy labels, and legitimate-message compromises.
-4. Run the full simulation only after the schema and prompt behave correctly.
-5. Compare outputs across prompt/model versions when useful.
-6. Discuss both results and model limitations in the thesis.
-
-## Suggested Thesis Placement
-
-The project can be included as:
-
-- a short experimental chapter;
-- a methodological prototype;
-- or an appendix supporting a broader thesis on crypto phishing and social engineering.
-
-It should not replace empirical evidence from real users. Its value is methodological: it formalizes a phishing decision chain and allows controlled comparison between synthetic profiles and scenarios.
+1. Run a balanced mini-run.
+2. Inspect `analyze_latest.py` output.
+3. Check parse errors, validation errors and legitimate-message behavior.
+4. Run the full simulation only after the structure looks stable.
+5. Compare results across model or prompt versions when needed.
