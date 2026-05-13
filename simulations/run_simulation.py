@@ -338,10 +338,10 @@ def build_prompt(agent_profile: dict, message: dict) -> str:
     visible_red_flags = message.get("visible_red_flags", [])
 
     return f"""
-Sei un utente reale chiamato {agent_profile.get('id')}. Devi simulare il comportamento spontaneo di questa persona. Non dare consigli di sicurezza.
+Sei un utente reale chiamato {agent_profile.get('id')}. Devi simulare il comportamento spontaneo di questa persona, non dare consigli di sicurezza e non parlare come un modello che sa di essere in una simulazione.
 
 L'utente ha gia ricevuto e letto il messaggio. La lettura del messaggio non e una scelta simulata.
-Devi decidere cosa fa dopo averlo letto.
+La prima scelta simulata e la reazione comportamentale dopo la lettura.
 
 Profilo:
 - Eta: {agent_profile.get('age')}
@@ -354,9 +354,10 @@ Profilo:
 - Tratti: impulsivita={traits.get('impulsiveness')}, fiducia nei brand={traits.get('trust_in_brands')}, competenza tecnologica={traits.get('tech_savvy')}, livello di attenzione={traits.get('attention_level')}, avversione al rischio={traits.get('risk_aversion')}
 
 Caratteristiche percepibili del messaggio:
+- Canale: {message.get('channel')}
 - Urgenza: {feats.get('urgency')}
 - Personalizzazione: {feats.get('personalization')}
-- Ricompensa o danno evitato: {feats.get('reward')}
+- Ricompensa promessa o perdita minacciata: {feats.get('reward')}
 - Red flag visibili:
 {format_label_list(visible_red_flags)}
 - Azione di ingresso nel flow, se decide di procedere: {message.get('entry_action')}
@@ -367,10 +368,11 @@ Messaggio ricevuto tramite {message.get('channel')}:
 \"\"\"{message.get('text')}\"\"\"
 
 L'utente NON conosce l'etichetta interna del messaggio e NON sa se sia legittimo o fraudolento.
-Non comportarti sempre come un esperto di cybersecurity.
+Non comportarti automaticamente da esperto di cybersecurity.
 Non scegliere automaticamente la risposta piu sicura.
-Non scegliere automaticamente di procedere.
-Devi impersonare il profilo: includi esitazioni, scorciatoie, fiducia, distrazione, fretta o prudenza quando sono coerenti con questa persona.
+Non scegliere automaticamente una compromissione solo perche il messaggio potrebbe essere malevolo.
+Non cercare di ottenere una distribuzione specifica di decisioni.
+Devi impersonare il profilo: esitazioni, scorciatoie, fiducia, distrazione, fretta o prudenza possono emergere solo quando sono coerenti con questa persona e con il contesto.
 
 Decisioni possibili:
 {format_label_list(ALLOWED_DECISIONS)}
@@ -384,7 +386,8 @@ Significato delle decisioni:
 
 Significato di PROCEDE_CON_LA_RICHIESTA:
 - l'utente accetta la premessa del messaggio ed entra nel flow richiesto;
-- eventuale apertura di link, bottone, chat o procedura e gia implicita;
+- se il messaggio contiene link, bottone o chat, il click o l'apertura e implicita;
+- click, apertura link o apertura chat non devono essere salvati come azione finale;
 - non e una compromissione automatica.
 
 Esiti possibili del flow:
@@ -400,22 +403,18 @@ Regole:
 - Se completa un'azione rischiosa, usa flow_outcome = COMPROMISSIONE_COMPLETATA e scegli una sola compromise_action compatibile con lo scenario.
 - Se il flow sembra legittimo e viene completato senza compromissione, usa flow_outcome = AZIONE_LEGITTIMA_COMPLETATA e compromise_action = NESSUNA.
 - Non usare azioni tecniche intermedie come click, apertura link o apertura messaggio come azione finale.
+- SEGNALA_COME_PHISHING e possibile, ma non va forzata.
+- VERIFICA_TRAMITE_CANALE_UFFICIALE e possibile, ma non deve sostituire automaticamente tutte le altre reazioni prudenti.
 
 Criteri comportamentali:
+- Valuta in modo bilanciato competenza tecnica, esperienza crypto, formazione di sicurezza, impulsivita, livello di attenzione, fiducia verso brand o supporto, avversione al rischio, urgenza percepita, ricompensa promessa, perdita minacciata, canale del messaggio e segnali visibili nel testo.
+- La scelta tra fermarsi prima della compromissione e completare l'azione finale richiesta deve dipendere dal profilo e dal contesto, senza default.
 - Alta esperienza crypto non significa automaticamente prudenza.
 - Bassa formazione di sicurezza non significa automaticamente ingenuita.
-- Una persona impulsiva, sotto pressione o attratta da una ricompensa puo procedere.
-- Una persona attenta, avversa al rischio o formata puo verificare o segnalare.
-- Una persona occupata puo ignorare o rimandare.
-- Se i red flag sono molto evidenti e il profilo tende a riconoscere truffe, segnalare e plausibile quanto verificare.
-- Non sostituire automaticamente una segnalazione plausibile con una verifica.
-- Non scegliere sempre verifica.
-- Non scegliere sempre procedi.
-- Non scegliere sempre ignora.
-- Valuta profilo, contesto, canale, urgenza, personalizzazione e ricompensa.
+- Fiducia, pressione, stanchezza, interesse economico, cautela o sospetto vanno pesati in base all'archetipo.
 - Non scegliere azioni incompatibili con questo scenario.
 - Se decidi COMPROMISSIONE_COMPLETATA, la compromise_action deve essere una delle possibili azioni di compromissione indicate sopra.
-- La motivation deve essere breve.
+- La motivation deve essere breve e spiegare la scelta dal punto di vista dell'archetipo.
 
 Rispondi solo in JSON valido con questo schema:
 {{
@@ -697,6 +696,7 @@ CSV_COLUMNS = [
     "random_seed",
     "interaction_seed",
     "agent_id",
+    "archetype_id",
     "age",
     "age_group",
     "role",
@@ -797,6 +797,8 @@ def build_interactions(profiles: list[dict], messages: list[dict], limit: int | 
 def make_csv_row(run_id: str, profile: dict, message: dict, interaction_seed: int, resp: dict) -> dict:
     feats = message.get("features", {})
     traits = profile.get("traits", {})
+    agent_id = profile.get("id", "")
+    archetype_id = agent_id.rsplit("_", 1)[0] if "_" in agent_id and agent_id.rsplit("_", 1)[1].isdigit() else agent_id
 
     row = {
         "run_id": run_id,
@@ -804,7 +806,8 @@ def make_csv_row(run_id: str, profile: dict, message: dict, interaction_seed: in
         "temperature": TEMPERATURE,
         "random_seed": RANDOM_SEED,
         "interaction_seed": interaction_seed,
-        "agent_id": profile.get("id"),
+        "agent_id": agent_id,
+        "archetype_id": archetype_id,
         "age": profile.get("age"),
         "age_group": profile.get("age_group"),
         "role": profile.get("role"),
@@ -984,6 +987,7 @@ def main():
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
         writer.writeheader()
+        f.flush()
 
         total = len(interactions)
         for cnt, (profile, message) in enumerate(interactions, start=1):
@@ -998,6 +1002,7 @@ def main():
             row = make_csv_row(run_id, profile, message, interaction_seed, resp)
 
             writer.writerow(row)
+            f.flush()
             update_summary(summary, row)
 
     print_summary(out_path, summary)
