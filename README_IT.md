@@ -102,7 +102,7 @@ Contiene i messaggi usati nella simulazione. Ci sono scenari di phishing crypto,
 
 ### `simulations/analyze_latest.py`
 
-Carica l'ultimo CSV generato e stampa metriche aggiornate su `decision`, `specific_action`, compromissione, controlli sui messaggi legittimi, parse error e campioni di motivazioni.
+Carica l'ultimo CSV generato e stampa metriche aggiornate su `decision`, `flow_outcome`, `compromise_action`, compromissione, controlli sui messaggi legittimi, parse error e warning.
 
 ### `analysis.ipynb`
 
@@ -257,7 +257,7 @@ Per ogni coppia agente-messaggio, Python costruisce un prompt con:
 - tratti comportamentali;
 - situazione personale del momento;
 - testo del messaggio;
-- azioni compatibili con quello scenario;
+- azione di ingresso e azioni di compromissione compatibili con quello scenario;
 - regole logiche di coerenza.
 
 Il modello deve rispondere in JSON:
@@ -265,7 +265,8 @@ Il modello deve rispondere in JSON:
 ```json
 {
   "decision": "...",
-  "specific_action": "...",
+  "flow_outcome": "...",
+  "compromise_action": "...",
   "motivation": "frase breve"
 }
 ```
@@ -280,32 +281,32 @@ Le decisioni ammesse sono:
 
 ```text
 IGNORA
+RIMANDA_O_NON_DECIDE
 VERIFICA_TRAMITE_CANALE_UFFICIALE
 SEGNALA_COME_PHISHING
 PROCEDE_CON_LA_RICHIESTA
-RIMANDA_O_NON_DECIDE
 ```
 
-`specific_action` viene validata sia rispetto alle azioni globali sia rispetto alle `allowed_proceed_actions` specifiche dello scenario in `scenarios/messages.json`.
+`PROCEDE_CON_LA_RICHIESTA` significa che l'utente entra nel flow richiesto. L'apertura di link, bottone o chat e implicita e non viene trattata come azione finale.
 
-Se la decisione non e `PROCEDE_CON_LA_RICHIESTA`, Python applica solo regole deterministiche di coerenza:
+Se la decisione non e `PROCEDE_CON_LA_RICHIESTA`, Python applica regole deterministiche di coerenza:
 
-- `IGNORA` e `RIMANDA_O_NON_DECIDE` diventano `NESSUNA_AZIONE`;
-- `VERIFICA_TRAMITE_CANALE_UFFICIALE` mantiene la stessa azione;
-- `SEGNALA_COME_PHISHING` mantiene la stessa azione.
+- `flow_outcome = NON_ENTRA_NEL_FLOW`;
+- `compromise_action = NESSUNA`.
 
-Per `PROCEDE_CON_LA_RICHIESTA`, il modello deve scegliere una sola azione compatibile con lo scenario, per esempio `CONCEDE_ACCESSO_REMOTO`, `COLLEGA_WALLET`, `INVIA_FONDI` oppure azioni legittime come `COMPLETA_RESET_PASSWORD_LEGITTIMO`.
+Nei messaggi di phishing, un utente che procede puo fermarsi prima della compromissione oppure completare una sola azione compromettente compatibile con lo scenario, per esempio `CONCEDE_ACCESSO_REMOTO`, `COLLEGA_WALLET`, `APPROVA_TRANSAZIONE`, `INVIA_FONDI` o `INSTALLA_APP_O_SOFTWARE`.
 
 `compromised` viene calcolato scenario per scenario:
 
 ```python
 compromised = (
     message["type"] == "phishing"
-    and specific_action in message.get("compromising_actions", [])
+    and flow_outcome == "COMPROMISSIONE_COMPLETATA"
+    and compromise_action in message.get("possible_compromise_actions", [])
 )
 ```
 
-I messaggi legittimi quindi non possono generare compromissione. Nei messaggi di phishing, invece, la compromissione viene conteggiata solo se l'azione scelta e tra quelle compromettenti per quello scenario.
+I messaggi legittimi quindi non possono generare compromissione; se un flow legittimo viene completato, `flow_outcome = AZIONE_LEGITTIMA_COMPLETATA` e `compromise_action = NESSUNA`.
 
 ---
 
@@ -373,7 +374,7 @@ La temperature è volutamente bassa: la simulazione deve essere più stabile che
 
 ### Modalità JSON
 
-La richiesta a Ollama prova prima uno schema JSON per `decision`, `specific_action` e `motivation`. Se la versione locale di Ollama non supporta lo schema, lo script usa il fallback a JSON semplice e mantiene comunque la validazione Python.
+La richiesta a Ollama prova prima uno schema JSON per `decision`, `flow_outcome`, `compromise_action` e `motivation`. Se la versione locale di Ollama non supporta lo schema, lo script usa il fallback a JSON semplice e mantiene comunque la validazione Python.
 
 ---
 
@@ -412,23 +413,31 @@ Le colonne principali sono:
 | `reward` | Ricompensa promessa o danno evitato |
 | `raw_decision` | Decisione grezza prodotta dal modello |
 | `decision` | Decisione dopo la lettura, normalizzata |
-| `raw_specific_action` | Azione specifica grezza prodotta dal modello |
-| `specific_action` | Azione specifica normalizzata e compatibile con lo scenario |
-| `proceeded` | `True` se l'utente segue la richiesta del messaggio |
+| `raw_flow_outcome` | Esito del flow grezzo prodotto dal modello |
+| `flow_outcome` | Esito normalizzato del flow |
+| `raw_compromise_action` | Azione di compromissione grezza prodotta dal modello |
+| `compromise_action` | Azione di compromissione normalizzata, oppure `NESSUNA` |
+| `entered_flow` | `True` se l'utente segue la richiesta del messaggio |
+| `stopped_before_compromise` | `True` se entra nel flow ma si ferma prima della compromissione |
 | `raw_initial_reaction` | Alias retrocompatibile di `raw_decision` |
 | `initial_reaction` | Alias retrocompatibile di `decision` |
-| `raw_final_action` | Alias retrocompatibile di `raw_specific_action` |
-| `final_action` | Alias retrocompatibile di `specific_action` |
-| `engaged` | Alias retrocompatibile di `proceeded` |
-| `compromised` | `True` solo per phishing con azione compromettente per quello scenario |
+| `raw_final_action` | Alias retrocompatibile di `raw_compromise_action` |
+| `final_action` | Alias retrocompatibile di `compromise_action` |
+| `engaged` | Alias retrocompatibile di `entered_flow` |
+| `compromised` | `True` solo per phishing con compromissione completata e coerente con lo scenario |
 | `reported` | `True` se l'agente segnala il messaggio |
 | `verified` | `True` se l'agente verifica tramite canali affidabili |
+| `ignored` | `True` se l'agente ignora il messaggio |
+| `delayed` | `True` se l'agente rimanda o non decide |
 | `false_positive_report` | `True` se un messaggio legittimo viene segnalato come phishing |
 | `legitimate_completion` | `True` se una richiesta legittima viene completata |
 | `parse_error` | `True` se c'è stato un errore di parsing o validazione |
 | `validation_error` | Motivo dell'errore di parsing/validazione |
 | `motivation` | Motivazione sintetica generata dal modello |
 | `raw_response` | Risposta grezza del modello |
+| `raw_specific_action` | Alias retrocompatibile di `raw_compromise_action` |
+| `specific_action` | Alias retrocompatibile di `compromise_action` |
+| `proceeded` | Alias retrocompatibile di `entered_flow` |
 
 ---
 
@@ -439,9 +448,11 @@ Il notebook oppure `simulations/analyze_latest.py` possono calcolare diverse met
 | Metrica | Significato |
 |---|---|
 | Distribuzione decisioni | Distribuzione delle decisioni dopo la lettura |
-| Distribuzione azioni specifiche | Distribuzione delle azioni compatibili con gli scenari |
-| Tasso di procedura | Percentuale di casi in cui l'utente segue la richiesta |
-| Compromissione sui phishing | Percentuale di phishing con azione compromettente per lo scenario |
+| Distribuzione flow outcome | Distribuzione degli esiti del flow |
+| Distribuzione compromise action | Distribuzione delle azioni di compromissione completate |
+| Entered flow rate | Percentuale di casi in cui l'utente segue la richiesta |
+| Stopped before compromise rate | Percentuale di casi in cui entra nel flow ma si ferma prima della compromissione |
+| Compromissione sui phishing | Percentuale di phishing con compromissione completata e coerente con lo scenario |
 | Controllo legittimi | Verifica che i messaggi legittimi non producano compromissione |
 | Tasso di segnalazione | Percentuale di messaggi segnalati come phishing |
 | Tasso di verifica | Percentuale di messaggi verificati tramite canali affidabili |

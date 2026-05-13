@@ -4,7 +4,7 @@
     "type": "phishing",
     "channel": "phone_chat",
     "description": "Scenario mirato ispirato al caso studio del 18 agosto 2024: falsa assistenza sicurezza Google/Gemini e richiesta di accesso remoto",
-    "text": "Ricevi una telefonata e successivi messaggi da una persona che si presenta come membro del team sicurezza di un noto servizio collegato ai tuoi account crypto. L'interlocutore sostiene che siano stati rilevati tentativi di accesso sospetti e che l'account possa essere compromesso. Per evitare il blocco delle operazioni e mettere in sicurezza i fondi, ti chiede di verificare immediatamente le impostazioni di autenticazione a due fattori e di avviare una sessione di assistenza remota. Durante la conversazione, l'interlocutore usa tono professionale, riferimenti a procedure di sicurezza e pressione temporale, sostenendo che il mancato intervento immediato potrebbe esporre i fondi a ulteriori rischi. Per proseguire, l'interlocutore indica un portale di supporto: https://support-security-check.test/session",
+    "text": "Ricevi una telefonata e successivi messaggi da una persona che si presenta come membro del team sicurezza di un noto servizio collegato ai tuoi account crypto. L'interlocutore sostiene che siano stati rilevati tentativi di accesso sospetti e che l'account possa essere compromesso. Per evitare il blocco delle operazioni e mettere in sicurezza i fondi, ti chiede di verificare immediatamente le impostazioni di autenticazione a due fattori e di avviare una sessione di assistenza remota. Durante la conversazione usa tono professionale, riferimenti a procedure di sicurezza e pressione temporale, sostenendo che il mancato intervento immediato potrebbe esporre i fondi a ulteriori rischi. Per proseguire, indica un portale di supporto: https://support-security-check.test/session",
     "features": {
       "urgency": "alta",
       "personalization": "alta",
@@ -12,21 +12,24 @@
       "reward": "protezione_fondi",
       "case_study": "true"
     },
-    "allowed_proceed_actions": [
-      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [
       "CONCEDE_ACCESSO_REMOTO"
     ],
-    "compromising_actions": [
-      "CONCEDE_ACCESSO_REMOTO"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "pressione temporale elevata",
+      "richiesta di sessione remota",
+      "link non ufficiale di supporto",
+      "contatto non richiesto"
+    ]
   },
   {
     "id": "case_study_wallet_security_migration",
     "type": "phishing",
     "channel": "phone_chat",
     "description": "Scenario mirato ispirato al caso studio: falsa procedura di messa in sicurezza di un wallet locale",
-    "text": "Vieni contattato da un operatore che si presenta come membro del supporto sicurezza e afferma di aver rilevato attività anomale collegate ai tuoi account e ai wallet associati. L'operatore sostiene che, per prevenire trasferimenti non autorizzati, sia necessario eseguire una verifica guidata del dispositivo e confermare che il wallet locale sia integro. Ti chiede quindi di avviare una sessione remota e di seguire istruzioni in tempo reale. Il messaggio insiste sul fatto che la procedura sia urgente, che non comporti trasferimenti di fondi e che serva esclusivamente a proteggere gli asset. Per completare la verifica, l'operatore invia il seguente link: https://wallet-security-review.test/connect",
+    "text": "Vieni contattato da un operatore che si presenta come membro del supporto sicurezza e afferma di aver rilevato attivita anomale collegate ai tuoi account e ai wallet associati. L'operatore sostiene che, per prevenire trasferimenti non autorizzati, sia necessario eseguire una verifica guidata del dispositivo e confermare che il wallet locale sia integro. Ti chiede quindi di avviare una sessione remota e di seguire istruzioni in tempo reale. Il messaggio insiste sul fatto che la procedura sia urgente, che non comporti trasferimenti di fondi e che serva esclusivamente a proteggere gli asset. Per completare la verifica, l'operatore invia il seguente link: https://wallet-security-review.test/connect",
     "features": {
       "urgency": "alta",
       "personalization": "alta",
@@ -34,64 +37,69 @@
       "reward": "protezione_fondi",
       "case_study": "true"
     },
-    "allowed_proceed_actions": [
-      "CLICCA_LINK_SENZA_INSERIRE_DATI",
-      "CONCEDE_ACCESSO_REMOTO",
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [
       "COLLEGA_WALLET",
-      "APPROVA_TRANSAZIONE"
+      "APPROVA_TRANSAZIONE",
+      "CONCEDE_ACCESSO_REMOTO"
     ],
-    "compromising_actions": [
-      "CONCEDE_ACCESSO_REMOTO",
-      "COLLEGA_WALLET",
-      "APPROVA_TRANSAZIONE"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "contatto non richiesto",
+      "sessione remota richiesta",
+      "urgenza legata ai fondi",
+      "link esterno per collegare il wallet"
+    ]
   },
   {
     "id": "exchange_kyc_urgente",
     "type": "phishing",
     "channel": "email",
     "description": "Finta mail dell'exchange che minaccia blocco conto se non aggiorni KYC",
-    "text": "Gentile utente,\n\nabbiamo rilevato alcune anomalie nel suo account. Per rispettare le norme KYC/AML è necessario aggiornare immediatamente i suoi dati. In caso di mancato aggiornamento entro 24 ore, il suo account verrà temporaneamente sospeso e le transazioni bloccate.\n\nClicchi sul seguente link per verificare i dati e sbloccare il suo account:\nhttps://secure-exchange-verifica.test/kyc\n\nCordiali saluti,\nReparto Sicurezza",
+    "text": "Gentile utente,\n\nabbiamo rilevato alcune anomalie nel suo account. Per rispettare le norme KYC/AML e necessario aggiornare immediatamente i suoi dati. In caso di mancato aggiornamento entro 24 ore, il suo account verra temporaneamente sospeso e le transazioni bloccate.\n\nClicchi sul seguente link per verificare i dati e sbloccare il suo account:\nhttps://secure-exchange-verifica.test/kyc\n\nCordiali saluti,\nReparto Sicurezza",
     "features": {
       "urgency": "alta",
       "personalization": "bassa",
       "channel_brand": "exchange_noto_falso",
       "reward": "nessuno"
     },
-    "allowed_proceed_actions": [
-      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [
       "INSERISCE_CREDENZIALI",
       "INSERISCE_DATI_KYC"
     ],
-    "compromising_actions": [
-      "INSERISCE_CREDENZIALI",
-      "INSERISCE_DATI_KYC"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "minaccia di sospensione entro 24 ore",
+      "link con dominio non ufficiale",
+      "richiesta di credenziali o dati KYC",
+      "personalizzazione bassa"
+    ]
   },
   {
     "id": "defi_airdrop_premio",
     "type": "phishing",
     "channel": "social",
     "description": "Airdrop DeFi con APY molto elevati",
-    "text": "🎉 COMPLIMENTI! 🎉\n\nSei stato selezionato per ricevere un airdrop esclusivo del nuovo protocollo DeFi X, con APY fino al 500% sulle tue criptovalute. L'offerta è limitata ai primi 500 utenti.\n\nPer ricevere i token gratuiti, collega ORA il tuo wallet al seguente link e approva la transazione iniziale:\nhttps://defi-x-airdrop.test/connect\n\nNon perdere questa occasione unica!",
+    "text": "COMPLIMENTI!\n\nSei stato selezionato per ricevere un airdrop esclusivo del nuovo protocollo DeFi X, con APY fino al 500% sulle tue criptovalute. L'offerta e limitata ai primi 500 utenti.\n\nPer ricevere i token gratuiti, collega ORA il tuo wallet al seguente link e approva la transazione iniziale:\nhttps://defi-x-airdrop.test/connect\n\nNon perdere questa occasione unica!",
     "features": {
       "urgency": "media",
       "personalization": "bassa",
       "channel_brand": "nuovo_protocollo_sconosciuto",
       "reward": "altissimo"
     },
-    "allowed_proceed_actions": [
-      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [
       "COLLEGA_WALLET",
       "APPROVA_TRANSAZIONE"
     ],
-    "compromising_actions": [
-      "COLLEGA_WALLET",
-      "APPROVA_TRANSAZIONE"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "ricompensa molto elevata",
+      "protocollo sconosciuto",
+      "richiesta di collegare il wallet",
+      "richiesta di approvare una transazione"
+    ]
   },
   {
     "id": "supporto_tecnico_seed",
@@ -105,97 +113,107 @@
       "channel_brand": "finto_supporto_wallet",
       "reward": "nessuno"
     },
-    "allowed_proceed_actions": [
+    "entry_action": "RISPONDE_AL_MESSAGGIO",
+    "possible_compromise_actions": [
       "INSERISCE_SEED_PHRASE"
     ],
-    "compromising_actions": [
-      "INSERISCE_SEED_PHRASE"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "richiesta esplicita della seed phrase",
+      "finto blocco di sicurezza",
+      "pressione per sbloccare il wallet",
+      "richiesta di risposta in chat"
+    ]
   },
   {
     "id": "discord_moderatore_rugpull",
     "type": "phishing",
     "channel": "chat",
     "description": "Finto moderatore Discord che invia link a dApp malevola",
-    "text": "Ciao! Sono Luca, moderatore del server ufficiale DeFiYieldClub.\n\nStiamo lanciando in anticipo una nuova funzione di staking riservata ai membri più attivi del server. Per partecipare alla fase di beta privata e ottenere un bonus del 50% sulle ricompense, devi solo collegare il tuo wallet tramite il nostro link interno:\nhttps://beta-defiyieldclub.test/stake\n\nTi chiedo di non condividere questo link fuori dal server, è solo per i membri fidati 😉",
+    "text": "Ciao! Sono Luca, moderatore del server ufficiale DeFiYieldClub.\n\nStiamo lanciando in anticipo una nuova funzione di staking riservata ai membri piu attivi del server. Per partecipare alla fase di beta privata e ottenere un bonus del 50% sulle ricompense, devi solo collegare il tuo wallet tramite il nostro link interno:\nhttps://beta-defiyieldclub.test/stake\n\nTi chiedo di non condividere questo link fuori dal server, e solo per i membri fidati.",
     "features": {
       "urgency": "bassa",
       "personalization": "alta",
       "channel_brand": "moderatore_comunita",
       "reward": "alta"
     },
-    "allowed_proceed_actions": [
-      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [
       "COLLEGA_WALLET",
       "APPROVA_TRANSAZIONE"
     ],
-    "compromising_actions": [
-      "COLLEGA_WALLET",
-      "APPROVA_TRANSAZIONE"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "link privato non verificabile",
+      "bonus elevato",
+      "richiesta di collegare il wallet",
+      "invito a non condividere il link"
+    ]
   },
   {
     "id": "twitter_giveaway_match",
     "type": "phishing",
     "channel": "social",
     "description": "Giveaway su social con schema 'inviami 1 ETH, ti mando 2 ETH'",
-    "text": "🚀 OFFICIAL GIVEAWAY 🚀\n\nPer celebrare il traguardo di 1M follower, il team di CryptoInfluencerXYZ sta regalando 5.000 ETH alla community!\n\nPer partecipare:\n1️⃣ Invia tra 0.1 e 5 ETH all'indirizzo ufficiale dell'evento\n2️⃣ Riceverai il doppio dell'importo immediatamente indietro\n\nIndirizzo evento: 0xFAKE1234FAKE1234FAKE1234FAKE1234FAKE\n\nSolo per il tempo limitato del live stream!",
+    "text": "OFFICIAL GIVEAWAY\n\nPer celebrare il traguardo di 1M follower, il team di CryptoInfluencerXYZ sta regalando 5.000 ETH alla community!\n\nPer partecipare:\n1. Invia tra 0.1 e 5 ETH all'indirizzo ufficiale dell'evento\n2. Riceverai il doppio dell'importo immediatamente indietro\n\nIndirizzo evento: 0xFAKE1234FAKE1234FAKE1234FAKE1234FAKE\n\nSolo per il tempo limitato del live stream!",
     "features": {
       "urgency": "alta",
       "personalization": "bassa",
       "channel_brand": "influencer_noto_falso",
       "reward": "altissimo"
     },
-    "allowed_proceed_actions": [
+    "entry_action": "SEGUE_LE_ISTRUZIONI_DEL_POST",
+    "possible_compromise_actions": [
       "INVIA_FONDI"
     ],
-    "compromising_actions": [
-      "INVIA_FONDI"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "promessa di raddoppio fondi",
+      "richiesta di inviare crypto prima di ricevere premio",
+      "urgenza da live stream",
+      "indirizzo wallet pubblicato nel post"
+    ]
   },
   {
     "id": "update_app_store_falso",
     "type": "phishing",
     "channel": "mobile",
     "description": "Notifica push che invita a scaricare una falsa app wallet",
-    "text": "🔔 Aggiornamento critico disponibile per CryptoSafe Wallet\n\nPer continuare a utilizzare il wallet in sicurezza e correggere una vulnerabilità recentemente scoperta, è necessario installare l'ultima versione dell'app.\n\nClicca qui per scaricare l'aggiornamento da CryptoSafe Wallet Store:\nhttps://cryptosafe-wallet-secure-update.test/download\n\nIgnorare questo aggiornamento potrebbe causare perdita di fondi.",
+    "text": "Aggiornamento critico disponibile per CryptoSafe Wallet\n\nPer continuare a utilizzare il wallet in sicurezza e correggere una vulnerabilita recentemente scoperta, e necessario installare l'ultima versione dell'app.\n\nClicca qui per scaricare l'aggiornamento da CryptoSafe Wallet Store:\nhttps://cryptosafe-wallet-secure-update.test/download\n\nIgnorare questo aggiornamento potrebbe causare perdita di fondi.",
     "features": {
       "urgency": "media",
       "personalization": "bassa",
       "channel_brand": "app_wallet_falsa",
       "reward": "nessuno"
     },
-    "allowed_proceed_actions": [
-      "CLICCA_LINK_SENZA_INSERIRE_DATI",
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [
       "INSTALLA_APP_O_SOFTWARE"
     ],
-    "compromising_actions": [
-      "INSTALLA_APP_O_SOFTWARE"
-    ],
-    "legitimate_actions": []
+    "legitimate_completion_action": null,
+    "visible_red_flags": [
+      "download fuori dallo store ufficiale",
+      "pressione su vulnerabilita critica",
+      "minaccia di perdita fondi",
+      "dominio non ufficiale"
+    ]
   },
   {
     "id": "exchange_legit_password_reset",
     "type": "legittimo",
     "channel": "email",
     "description": "Mail legittima di reset password (controllo)",
-    "text": "Gentile utente,\n\nabbiamo ricevuto una richiesta di reset della password per il suo account sull'exchange CoinSecure.\n\nSe hai effettuato tu la richiesta, clicca sul seguente link per impostare una nuova password:\nhttps://www.coinsecure.test/reset?token=XYZ\n\nSe non hai richiesto il reset, ignora questa email. Il tuo account rimarrà invariato.\n\nCordiali saluti,\nTeam CoinSecure",
+    "text": "Gentile utente,\n\nabbiamo ricevuto una richiesta di reset della password per il suo account sull'exchange CoinSecure.\n\nSe hai effettuato tu la richiesta, clicca sul seguente link per impostare una nuova password:\nhttps://www.coinsecure.test/reset?token=XYZ\n\nSe non hai richiesto il reset, ignora questa email. Il tuo account rimarra invariato.\n\nCordiali saluti,\nTeam CoinSecure",
     "features": {
       "urgency": "bassa",
       "personalization": "media",
       "channel_brand": "exchange_legittimo",
       "reward": "nessuno"
     },
-    "allowed_proceed_actions": [
-      "COMPLETA_RESET_PASSWORD_LEGITTIMO"
-    ],
-    "compromising_actions": [],
-    "legitimate_actions": [
-      "COMPLETA_RESET_PASSWORD_LEGITTIMO"
-    ]
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [],
+    "legitimate_completion_action": "COMPLETA_RESET_PASSWORD_LEGITTIMO",
+    "visible_red_flags": []
   },
   {
     "id": "newsletter_legit_sicurezza",
@@ -209,12 +227,9 @@
       "channel_brand": "piattaforma_educativa",
       "reward": "nessuno"
     },
-    "allowed_proceed_actions": [
-      "LEGGE_GUIDA_SICUREZZA"
-    ],
-    "compromising_actions": [],
-    "legitimate_actions": [
-      "LEGGE_GUIDA_SICUREZZA"
-    ]
+    "entry_action": "APRE_LINK_O_FLOW",
+    "possible_compromise_actions": [],
+    "legitimate_completion_action": "LEGGE_GUIDA_SICUREZZA",
+    "visible_red_flags": []
   }
 ]

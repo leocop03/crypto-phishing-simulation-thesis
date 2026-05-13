@@ -86,17 +86,21 @@ VARIANT_PROFILES = [
 
 ALLOWED_DECISIONS = [
     "IGNORA",
+    "RIMANDA_O_NON_DECIDE",
     "VERIFICA_TRAMITE_CANALE_UFFICIALE",
     "SEGNALA_COME_PHISHING",
     "PROCEDE_CON_LA_RICHIESTA",
-    "RIMANDA_O_NON_DECIDE",
 ]
 
-ALLOWED_SPECIFIC_ACTIONS = [
-    "NESSUNA_AZIONE",
-    "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "SEGNALA_COME_PHISHING",
-    "CLICCA_LINK_SENZA_INSERIRE_DATI",
+ALLOWED_FLOW_OUTCOMES = [
+    "NON_ENTRA_NEL_FLOW",
+    "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE",
+    "COMPROMISSIONE_COMPLETATA",
+    "AZIONE_LEGITTIMA_COMPLETATA",
+]
+
+ALLOWED_COMPROMISE_ACTIONS = [
+    "NESSUNA",
     "INSERISCE_CREDENZIALI",
     "INSERISCE_DATI_KYC",
     "INSERISCE_SEED_PHRASE",
@@ -105,16 +109,7 @@ ALLOWED_SPECIFIC_ACTIONS = [
     "CONCEDE_ACCESSO_REMOTO",
     "INVIA_FONDI",
     "INSTALLA_APP_O_SOFTWARE",
-    "COMPLETA_RESET_PASSWORD_LEGITTIMO",
-    "LEGGE_GUIDA_SICUREZZA",
 ]
-
-AUTO_ACTION_BY_DECISION = {
-    "IGNORA": "NESSUNA_AZIONE",
-    "RIMANDA_O_NON_DECIDE": "NESSUNA_AZIONE",
-    "VERIFICA_TRAMITE_CANALE_UFFICIALE": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "SEGNALA_COME_PHISHING": "SEGNALA_COME_PHISHING",
-}
 
 DECISION_MAPPING = {
     "NESSUNA": "IGNORA",
@@ -137,18 +132,27 @@ DECISION_MAPPING = {
     "CI_PENSA": "RIMANDA_O_NON_DECIDE",
 }
 
-SPECIFIC_ACTION_MAPPING = {
-    "NESSUNA": "NESSUNA_AZIONE",
-    "NESSUNA_AZIONE_ULTERIORE": "NESSUNA_AZIONE",
-    "NON_FA_NULLA": "NESSUNA_AZIONE",
-    "VERIFICA": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "VERIFICA_SUBITO": "VERIFICA_TRAMITE_CANALE_UFFICIALE",
-    "SEGNALA": "SEGNALA_COME_PHISHING",
-    "SEGNALA_SUBITO": "SEGNALA_COME_PHISHING",
-    "CLICCA_LINK": "CLICCA_LINK_SENZA_INSERIRE_DATI",
-    "CLICCA_SUL_LINK": "CLICCA_LINK_SENZA_INSERIRE_DATI",
-    "CLICK_SUL_LINK": "CLICCA_LINK_SENZA_INSERIRE_DATI",
-    "CLICKA_SUL_LINK": "CLICCA_LINK_SENZA_INSERIRE_DATI",
+FLOW_OUTCOME_MAPPING = {
+    "NESSUNA": "NON_ENTRA_NEL_FLOW",
+    "NESSUNA_AZIONE": "NON_ENTRA_NEL_FLOW",
+    "NON_ENTRA": "NON_ENTRA_NEL_FLOW",
+    "NON_ENTRA_NEL_FLUSSO": "NON_ENTRA_NEL_FLOW",
+    "NON_PROCEDE": "NON_ENTRA_NEL_FLOW",
+    "SI_FERMA": "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE",
+    "SI_FERMA_PRIMA": "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE",
+    "SI_FERMA_PRIMA_DI_COMPROMETTERSI": "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE",
+    "COMPROMESSO": "COMPROMISSIONE_COMPLETATA",
+    "COMPROMISSIONE": "COMPROMISSIONE_COMPLETATA",
+    "AZIONE_COMPLETATA": "AZIONE_LEGITTIMA_COMPLETATA",
+    "COMPLETA_AZIONE_LEGITTIMA": "AZIONE_LEGITTIMA_COMPLETATA",
+    "COMPLETAMENTO_LEGITTIMO": "AZIONE_LEGITTIMA_COMPLETATA",
+}
+
+COMPROMISE_ACTION_MAPPING = {
+    "NESSUNA_AZIONE": "NESSUNA",
+    "NESSUNA_AZIONE_ULTERIORE": "NESSUNA",
+    "NON_FA_NULLA": "NESSUNA",
+    "NO_COMPROMISSIONE": "NESSUNA",
     "INSERISCE_CREDENZIALI_O_SEED": "INSERISCE_CREDENZIALI",
     "INSERISCI_CREDENZIALI": "INSERISCE_CREDENZIALI",
     "FORNISCE_CREDENZIALI": "INSERISCE_CREDENZIALI",
@@ -167,9 +171,6 @@ SPECIFIC_ACTION_MAPPING = {
     "SCARICA_APP": "INSTALLA_APP_O_SOFTWARE",
     "INSTALLA_APP": "INSTALLA_APP_O_SOFTWARE",
     "INSTALLA_SOFTWARE": "INSTALLA_APP_O_SOFTWARE",
-    "RESET_PASSWORD": "COMPLETA_RESET_PASSWORD_LEGITTIMO",
-    "COMPLETA_RESET_PASSWORD": "COMPLETA_RESET_PASSWORD_LEGITTIMO",
-    "LEGGE_GUIDA": "LEGGE_GUIDA_SICUREZZA",
 }
 
 JSON_RESPONSE_SCHEMA = {
@@ -179,15 +180,19 @@ JSON_RESPONSE_SCHEMA = {
             "type": "string",
             "enum": ALLOWED_DECISIONS,
         },
-        "specific_action": {
+        "flow_outcome": {
             "type": "string",
-            "enum": ALLOWED_SPECIFIC_ACTIONS,
+            "enum": ALLOWED_FLOW_OUTCOMES,
+        },
+        "compromise_action": {
+            "type": "string",
+            "enum": ALLOWED_COMPROMISE_ACTIONS,
         },
         "motivation": {
             "type": "string",
         },
     },
-    "required": ["decision", "specific_action", "motivation"],
+    "required": ["decision", "flow_outcome", "compromise_action", "motivation"],
 }
 
 
@@ -317,6 +322,8 @@ def normalize_model_label(value) -> str:
 
 
 def format_label_list(values: list[str]) -> str:
+    if not values:
+        return "- nessuna"
     return "\n".join(f"- {value}" for value in values)
 
 
@@ -327,10 +334,11 @@ def build_prompt(agent_profile: dict, message: dict) -> str:
     """
     traits = agent_profile.get("traits", {})
     feats = message.get("features", {})
-    allowed_proceed_actions = message.get("allowed_proceed_actions", [])
+    possible_compromise_actions = message.get("possible_compromise_actions", [])
+    visible_red_flags = message.get("visible_red_flags", [])
 
     return f"""
-Sei un utente reale chiamato {agent_profile.get('id')}. Devi simulare il comportamento spontaneo di questa persona, non dare consigli di sicurezza.
+Sei un utente reale chiamato {agent_profile.get('id')}. Devi simulare il comportamento spontaneo di questa persona. Non dare consigli di sicurezza.
 
 L'utente ha gia ricevuto e letto il messaggio. La lettura del messaggio non e una scelta simulata.
 Devi decidere cosa fa dopo averlo letto.
@@ -349,6 +357,11 @@ Caratteristiche percepibili del messaggio:
 - Urgenza: {feats.get('urgency')}
 - Personalizzazione: {feats.get('personalization')}
 - Ricompensa o danno evitato: {feats.get('reward')}
+- Red flag visibili:
+{format_label_list(visible_red_flags)}
+- Azione di ingresso nel flow, se decide di procedere: {message.get('entry_action')}
+- Possibili azioni di compromissione se arrivasse fino in fondo:
+{format_label_list(possible_compromise_actions)}
 
 Messaggio ricevuto tramite {message.get('channel')}:
 \"\"\"{message.get('text')}\"\"\"
@@ -356,19 +369,37 @@ Messaggio ricevuto tramite {message.get('channel')}:
 L'utente NON conosce l'etichetta interna del messaggio e NON sa se sia legittimo o fraudolento.
 Non comportarti sempre come un esperto di cybersecurity.
 Non scegliere automaticamente la risposta piu sicura.
+Non scegliere automaticamente di procedere.
 Devi impersonare il profilo: includi esitazioni, scorciatoie, fiducia, distrazione, fretta o prudenza quando sono coerenti con questa persona.
 
 Decisioni possibili:
 {format_label_list(ALLOWED_DECISIONS)}
 
-Se decide di procedere, puo scegliere solo una di queste azioni specifiche compatibili con il messaggio:
-{format_label_list(allowed_proceed_actions)}
+Significato delle decisioni:
+- IGNORA: non interagisce.
+- RIMANDA_O_NON_DECIDE: non agisce subito o lascia il messaggio in sospeso.
+- VERIFICA_TRAMITE_CANALE_UFFICIALE: controlla tramite app, sito o canale ufficiale indipendente.
+- SEGNALA_COME_PHISHING: segnala, marca come sospetto o inoltra al canale anti-phishing.
+- PROCEDE_CON_LA_RICHIESTA: accetta la premessa del messaggio ed entra nel flow richiesto.
 
-Azioni automatiche:
-- Se decision = IGNORA: specific_action = NESSUNA_AZIONE
-- Se decision = RIMANDA_O_NON_DECIDE: specific_action = NESSUNA_AZIONE
-- Se decision = VERIFICA_TRAMITE_CANALE_UFFICIALE: specific_action = VERIFICA_TRAMITE_CANALE_UFFICIALE
-- Se decision = SEGNALA_COME_PHISHING: specific_action = SEGNALA_COME_PHISHING
+Significato di PROCEDE_CON_LA_RICHIESTA:
+- l'utente accetta la premessa del messaggio ed entra nel flow richiesto;
+- eventuale apertura di link, bottone, chat o procedura e gia implicita;
+- non e una compromissione automatica.
+
+Esiti possibili del flow:
+{format_label_list(ALLOWED_FLOW_OUTCOMES)}
+
+Azioni di compromissione possibili:
+{format_label_list(ALLOWED_COMPROMISE_ACTIONS)}
+
+Regole:
+- Se decision non e PROCEDE_CON_LA_RICHIESTA, usa flow_outcome = NON_ENTRA_NEL_FLOW e compromise_action = NESSUNA.
+- Se decision e PROCEDE_CON_LA_RICHIESTA, scegli cosa succede dopo l'ingresso nel flow.
+- Se entra nel flow ma si ferma prima di inserire dati, collegare wallet, firmare, inviare fondi, concedere accesso remoto o installare software, usa flow_outcome = SI_FERMA_PRIMA_DELLA_COMPROMISSIONE e compromise_action = NESSUNA.
+- Se completa un'azione rischiosa, usa flow_outcome = COMPROMISSIONE_COMPLETATA e scegli una sola compromise_action compatibile con lo scenario.
+- Se il flow sembra legittimo e viene completato senza compromissione, usa flow_outcome = AZIONE_LEGITTIMA_COMPLETATA e compromise_action = NESSUNA.
+- Non usare azioni tecniche intermedie come click, apertura link o apertura messaggio come azione finale.
 
 Criteri comportamentali:
 - Alta esperienza crypto non significa automaticamente prudenza.
@@ -376,38 +407,46 @@ Criteri comportamentali:
 - Una persona impulsiva, sotto pressione o attratta da una ricompensa puo procedere.
 - Una persona attenta, avversa al rischio o formata puo verificare o segnalare.
 - Una persona occupata puo ignorare o rimandare.
+- Se i red flag sono molto evidenti e il profilo tende a riconoscere truffe, segnalare e plausibile quanto verificare.
+- Non sostituire automaticamente una segnalazione plausibile con una verifica.
 - Non scegliere sempre verifica.
 - Non scegliere sempre procedi.
 - Non scegliere sempre ignora.
 - Valuta profilo, contesto, canale, urgenza, personalizzazione e ricompensa.
 - Non scegliere azioni incompatibili con questo scenario.
+- Se decidi COMPROMISSIONE_COMPLETATA, la compromise_action deve essere una delle possibili azioni di compromissione indicate sopra.
+- La motivation deve essere breve.
 
 Rispondi solo in JSON valido con questo schema:
 {{
   "decision": "UNA_DECISIONE_AMMESSA",
-  "specific_action": "UNA_AZIONE_SPECIFICA_AMMESSA",
+  "flow_outcome": "UN_ESITO_AMMESSO",
+  "compromise_action": "UNA_AZIONE_AMMESSA",
   "motivation": "frase breve"
 }}
 """
 
 
 def build_retry_prompt(original_prompt: str, message: dict, validation_error: str) -> str:
-    allowed_proceed_actions = message.get("allowed_proceed_actions", [])
+    possible_compromise_actions = message.get("possible_compromise_actions", [])
     return f"""
 {original_prompt}
 
-La risposta precedente non rispettava lo schema o conteneva un'azione incompatibile.
+La risposta precedente non rispettava lo schema o conteneva un esito incompatibile.
 Errore di validazione: {validation_error}
 
 Rispondi di nuovo solo con JSON valido.
 Decisioni ammesse:
 {format_label_list(ALLOWED_DECISIONS)}
 
-Azioni globali ammesse:
-{format_label_list(ALLOWED_SPECIFIC_ACTIONS)}
+Esiti flow ammessi:
+{format_label_list(ALLOWED_FLOW_OUTCOMES)}
 
-Se decision = PROCEDE_CON_LA_RICHIESTA, le sole azioni ammesse per questo scenario sono:
-{format_label_list(allowed_proceed_actions)}
+Azioni di compromissione globali ammesse:
+{format_label_list(ALLOWED_COMPROMISE_ACTIONS)}
+
+Se flow_outcome = COMPROMISSIONE_COMPLETATA, le sole azioni di compromissione ammesse per questo scenario sono:
+{format_label_list(possible_compromise_actions)}
 
 Non aggiungere testo fuori dal JSON.
 """
@@ -472,17 +511,25 @@ def build_parse_error_response(raw_response: str, validation_error: str, motivat
     return {
         "raw_decision": "",
         "decision": "PARSE_ERROR",
+        "raw_flow_outcome": "",
+        "flow_outcome": "PARSE_ERROR",
+        "raw_compromise_action": "",
+        "compromise_action": "PARSE_ERROR",
         "raw_specific_action": "",
         "specific_action": "PARSE_ERROR",
         "raw_initial_reaction": "",
         "initial_reaction": "PARSE_ERROR",
         "raw_final_action": "",
         "final_action": "PARSE_ERROR",
+        "entered_flow": False,
+        "stopped_before_compromise": False,
         "proceeded": False,
         "engaged": False,
         "compromised": False,
         "reported": False,
         "verified": False,
+        "ignored": False,
+        "delayed": False,
         "false_positive_report": False,
         "legitimate_completion": False,
         "parse_error": True,
@@ -493,12 +540,26 @@ def build_parse_error_response(raw_response: str, validation_error: str, motivat
 
 
 def validate_model_response(parsed: dict, message: dict, raw_response: str) -> dict:
-    raw_decision = normalize_model_label(parsed.get("decision", parsed.get("initial_reaction", "")))
-    raw_specific_action = normalize_model_label(parsed.get("specific_action", parsed.get("final_action", "")))
+    missing_fields = [
+        field_name
+        for field_name in ["decision", "flow_outcome", "compromise_action", "motivation"]
+        if field_name not in parsed
+    ]
+    if missing_fields:
+        return build_parse_error_response(
+            raw_response,
+            f"Campi mancanti: {', '.join(missing_fields)}",
+            str(parsed.get("motivation", "")).strip(),
+        )
+
+    raw_decision = normalize_model_label(parsed.get("decision", ""))
+    raw_flow_outcome = normalize_model_label(parsed.get("flow_outcome", ""))
+    raw_compromise_action = normalize_model_label(parsed.get("compromise_action", ""))
     motivation = str(parsed.get("motivation", "")).strip()
 
     decision = DECISION_MAPPING.get(raw_decision, raw_decision)
-    specific_action = SPECIFIC_ACTION_MAPPING.get(raw_specific_action, raw_specific_action)
+    flow_outcome = FLOW_OUTCOME_MAPPING.get(raw_flow_outcome, raw_flow_outcome)
+    compromise_action = COMPROMISE_ACTION_MAPPING.get(raw_compromise_action, raw_compromise_action)
 
     if decision not in ALLOWED_DECISIONS:
         return build_parse_error_response(
@@ -507,55 +568,85 @@ def validate_model_response(parsed: dict, message: dict, raw_response: str) -> d
             motivation,
         )
 
-    if specific_action not in ALLOWED_SPECIFIC_ACTIONS:
+    if flow_outcome not in ALLOWED_FLOW_OUTCOMES:
         return build_parse_error_response(
             raw_response,
-            f"Azione specifica non ammessa: {raw_specific_action}",
+            f"Flow outcome non ammesso: {raw_flow_outcome}",
             motivation,
         )
 
+    if compromise_action not in ALLOWED_COMPROMISE_ACTIONS:
+        return build_parse_error_response(
+            raw_response,
+            f"Azione di compromissione non ammessa: {raw_compromise_action}",
+            motivation,
+        )
+
+    message_type = message.get("type")
+    possible_compromise_actions = message.get("possible_compromise_actions", [])
+
     if decision != "PROCEDE_CON_LA_RICHIESTA":
-        specific_action = AUTO_ACTION_BY_DECISION[decision]
+        flow_outcome = "NON_ENTRA_NEL_FLOW"
+        compromise_action = "NESSUNA"
+    elif message_type == "legittimo":
+        flow_outcome = "AZIONE_LEGITTIMA_COMPLETATA"
+        compromise_action = "NESSUNA"
     else:
-        allowed_proceed_actions = message.get("allowed_proceed_actions", [])
-        if specific_action not in allowed_proceed_actions:
+        if flow_outcome not in {
+            "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE",
+            "COMPROMISSIONE_COMPLETATA",
+        }:
             return build_parse_error_response(
                 raw_response,
-                f"Azione non compatibile con lo scenario: {specific_action}",
+                f"Flow outcome non valido per scenario phishing: {flow_outcome}",
                 motivation,
             )
 
-    message_type = message.get("type")
-    proceeded = decision == "PROCEDE_CON_LA_RICHIESTA"
-    reported = decision == "SEGNALA_COME_PHISHING" or specific_action == "SEGNALA_COME_PHISHING"
-    verified = (
-        decision == "VERIFICA_TRAMITE_CANALE_UFFICIALE"
-        or specific_action == "VERIFICA_TRAMITE_CANALE_UFFICIALE"
-    )
+        if flow_outcome == "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE":
+            compromise_action = "NESSUNA"
+        elif compromise_action not in possible_compromise_actions:
+            return build_parse_error_response(
+                raw_response,
+                f"Azione di compromissione non compatibile con lo scenario: {compromise_action}",
+                motivation,
+            )
+
+    entered_flow = decision == "PROCEDE_CON_LA_RICHIESTA"
+    reported = decision == "SEGNALA_COME_PHISHING"
+    verified = decision == "VERIFICA_TRAMITE_CANALE_UFFICIALE"
+    ignored = decision == "IGNORA"
+    delayed = decision == "RIMANDA_O_NON_DECIDE"
+    stopped_before_compromise = flow_outcome == "SI_FERMA_PRIMA_DELLA_COMPROMISSIONE"
     compromised = (
         message_type == "phishing"
-        and specific_action in message.get("compromising_actions", [])
+        and flow_outcome == "COMPROMISSIONE_COMPLETATA"
+        and compromise_action in possible_compromise_actions
     )
     false_positive_report = message_type == "legittimo" and reported
-    legitimate_completion = (
-        message_type == "legittimo"
-        and specific_action in message.get("legitimate_actions", [])
-    )
+    legitimate_completion = flow_outcome == "AZIONE_LEGITTIMA_COMPLETATA"
 
     return {
         "raw_decision": raw_decision,
         "decision": decision,
-        "raw_specific_action": raw_specific_action,
-        "specific_action": specific_action,
+        "raw_flow_outcome": raw_flow_outcome,
+        "flow_outcome": flow_outcome,
+        "raw_compromise_action": raw_compromise_action,
+        "compromise_action": compromise_action,
+        "raw_specific_action": raw_compromise_action,
+        "specific_action": compromise_action,
         "raw_initial_reaction": raw_decision,
         "initial_reaction": decision,
-        "raw_final_action": raw_specific_action,
-        "final_action": specific_action,
-        "proceeded": proceeded,
-        "engaged": proceeded,
+        "raw_final_action": raw_compromise_action,
+        "final_action": compromise_action,
+        "entered_flow": entered_flow,
+        "stopped_before_compromise": stopped_before_compromise,
+        "proceeded": entered_flow,
+        "engaged": entered_flow,
         "compromised": compromised,
         "reported": reported,
         "verified": verified,
+        "ignored": ignored,
+        "delayed": delayed,
         "false_positive_report": false_positive_report,
         "legitimate_completion": legitimate_completion,
         "parse_error": False,
@@ -567,7 +658,7 @@ def validate_model_response(parsed: dict, message: dict, raw_response: str) -> d
 
 def query_llm(prompt: str, interaction_seed: int, message: dict) -> dict:
     """
-    Invia il prompt a Ollama, valida decision/specific_action e ritenta una sola
+    Invia il prompt a Ollama, valida decision/flow/compromise e ritenta una sola
     volta se JSON, label o compatibilita di scenario non sono validi.
     """
     current_prompt = prompt
@@ -627,6 +718,22 @@ CSV_COLUMNS = [
     "reward",
     "raw_decision",
     "decision",
+    "raw_flow_outcome",
+    "flow_outcome",
+    "raw_compromise_action",
+    "compromise_action",
+    "entered_flow",
+    "stopped_before_compromise",
+    "compromised",
+    "verified",
+    "reported",
+    "ignored",
+    "delayed",
+    "legitimate_completion",
+    "parse_error",
+    "validation_error",
+    "motivation",
+    "raw_response",
     "raw_specific_action",
     "specific_action",
     "proceeded",
@@ -635,15 +742,7 @@ CSV_COLUMNS = [
     "raw_final_action",
     "final_action",
     "engaged",
-    "compromised",
-    "reported",
-    "verified",
     "false_positive_report",
-    "legitimate_completion",
-    "parse_error",
-    "validation_error",
-    "motivation",
-    "raw_response",
 ]
 
 
@@ -727,6 +826,22 @@ def make_csv_row(run_id: str, profile: dict, message: dict, interaction_seed: in
         "reward": feats.get("reward"),
         "raw_decision": resp.get("raw_decision", ""),
         "decision": resp.get("decision", ""),
+        "raw_flow_outcome": resp.get("raw_flow_outcome", ""),
+        "flow_outcome": resp.get("flow_outcome", ""),
+        "raw_compromise_action": resp.get("raw_compromise_action", ""),
+        "compromise_action": resp.get("compromise_action", ""),
+        "entered_flow": resp.get("entered_flow", False),
+        "stopped_before_compromise": resp.get("stopped_before_compromise", False),
+        "compromised": resp.get("compromised", False),
+        "verified": resp.get("verified", False),
+        "reported": resp.get("reported", False),
+        "ignored": resp.get("ignored", False),
+        "delayed": resp.get("delayed", False),
+        "legitimate_completion": resp.get("legitimate_completion", False),
+        "parse_error": resp.get("parse_error", False),
+        "validation_error": str(resp.get("validation_error", "")).replace("\n", " "),
+        "motivation": str(resp.get("motivation", "")).replace("\n", " "),
+        "raw_response": str(resp.get("raw_response", "")).replace("\n", " "),
         "raw_specific_action": resp.get("raw_specific_action", ""),
         "specific_action": resp.get("specific_action", ""),
         "proceeded": resp.get("proceeded", False),
@@ -735,15 +850,7 @@ def make_csv_row(run_id: str, profile: dict, message: dict, interaction_seed: in
         "raw_final_action": resp.get("raw_final_action", ""),
         "final_action": resp.get("final_action", ""),
         "engaged": resp.get("engaged", False),
-        "compromised": resp.get("compromised", False),
-        "reported": resp.get("reported", False),
-        "verified": resp.get("verified", False),
         "false_positive_report": resp.get("false_positive_report", False),
-        "legitimate_completion": resp.get("legitimate_completion", False),
-        "parse_error": resp.get("parse_error", False),
-        "validation_error": str(resp.get("validation_error", "")).replace("\n", " "),
-        "motivation": str(resp.get("motivation", "")).replace("\n", " "),
-        "raw_response": str(resp.get("raw_response", "")).replace("\n", " "),
     }
     return row
 
@@ -751,14 +858,25 @@ def make_csv_row(run_id: str, profile: dict, message: dict, interaction_seed: in
 def update_summary(summary: dict, row: dict):
     summary["rows"] += 1
     summary["decision_counter"][row["decision"]] += 1
-    summary["specific_action_counter"][row["specific_action"]] += 1
+    summary["flow_outcome_counter"][row["flow_outcome"]] += 1
+    summary["compromise_action_counter"][row["compromise_action"]] += 1
 
     if str(row["parse_error"]).lower() == "true":
         summary["parse_errors"] += 1
+    if str(row["entered_flow"]).lower() == "true":
+        summary["entered_flow"] += 1
+    if str(row["stopped_before_compromise"]).lower() == "true":
+        summary["stopped_before_compromise"] += 1
     if str(row["reported"]).lower() == "true":
         summary["reported"] += 1
     if str(row["verified"]).lower() == "true":
         summary["verified"] += 1
+    if str(row["ignored"]).lower() == "true":
+        summary["ignored"] += 1
+    if str(row["delayed"]).lower() == "true":
+        summary["delayed"] += 1
+    if str(row["legitimate_completion"]).lower() == "true":
+        summary["legitimate_completion"] += 1
 
     message_type = row["message_type"]
     if message_type == "phishing":
@@ -783,8 +901,13 @@ def print_counter(title: str, counter: Counter):
 def print_summary(out_path: str, summary: dict):
     total = summary["rows"]
     parse_error_rate = (summary["parse_errors"] / total * 100) if total else 0
+    entered_flow_rate = (summary["entered_flow"] / total * 100) if total else 0
+    stopped_rate = (summary["stopped_before_compromise"] / total * 100) if total else 0
     reported_rate = (summary["reported"] / total * 100) if total else 0
     verified_rate = (summary["verified"] / total * 100) if total else 0
+    ignored_rate = (summary["ignored"] / total * 100) if total else 0
+    delayed_rate = (summary["delayed"] / total * 100) if total else 0
+    legitimate_completion_rate = (summary["legitimate_completion"] / total * 100) if total else 0
 
     print("\nSimulazione completata.")
     print(f"File generato: {out_path}")
@@ -794,13 +917,25 @@ def print_summary(out_path: str, summary: dict):
     print(f"Parse error rate: {summary['parse_errors']}/{total} ({parse_error_rate:.2f}%)")
 
     print_counter("Decision distribution", summary["decision_counter"])
-    print_counter("Specific action distribution", summary["specific_action_counter"])
+    print_counter("Flow outcome distribution", summary["flow_outcome_counter"])
+    print_counter("Compromise action distribution", summary["compromise_action_counter"])
 
     print("\nCompromised:")
     print(f"  phishing: {summary['compromised_phishing']}/{summary['phishing_rows']}")
     print(f"  legittimo: {summary['compromised_legitimate']}/{summary['legitimate_rows']}")
-    print(f"\nReported rate: {summary['reported']}/{total} ({reported_rate:.2f}%)")
+    print(f"\nEntered flow rate: {summary['entered_flow']}/{total} ({entered_flow_rate:.2f}%)")
+    print(
+        "Stopped before compromise rate: "
+        f"{summary['stopped_before_compromise']}/{total} ({stopped_rate:.2f}%)"
+    )
+    print(f"Reported rate: {summary['reported']}/{total} ({reported_rate:.2f}%)")
     print(f"Verified rate: {summary['verified']}/{total} ({verified_rate:.2f}%)")
+    print(f"Ignored rate: {summary['ignored']}/{total} ({ignored_rate:.2f}%)")
+    print(f"Delayed rate: {summary['delayed']}/{total} ({delayed_rate:.2f}%)")
+    print(
+        "Legitimate completion rate: "
+        f"{summary['legitimate_completion']}/{total} ({legitimate_completion_rate:.2f}%)"
+    )
 
     if summary["compromised_legitimate"] > 0:
         print("WARNING: trovate compromissioni su messaggi legittimi, non dovrebbe succedere.")
@@ -830,14 +965,20 @@ def main():
     summary = {
         "rows": 0,
         "parse_errors": 0,
+        "entered_flow": 0,
+        "stopped_before_compromise": 0,
         "reported": 0,
         "verified": 0,
+        "ignored": 0,
+        "delayed": 0,
+        "legitimate_completion": 0,
         "phishing_rows": 0,
         "legitimate_rows": 0,
         "compromised_phishing": 0,
         "compromised_legitimate": 0,
         "decision_counter": Counter(),
-        "specific_action_counter": Counter(),
+        "flow_outcome_counter": Counter(),
+        "compromise_action_counter": Counter(),
     }
 
     with open(out_path, "w", newline="", encoding="utf-8") as f:
