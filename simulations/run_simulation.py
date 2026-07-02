@@ -298,6 +298,166 @@ def expand_profiles(archetypes, instances_per_archetype=INSTANCES_PER_ARCHETYPE)
     return profiles
 
 
+# ------- CONVERSIONI NUMERICHE PER PESI PROBABILISTICI -------
+#
+# Ogni tratto del profilo viene convertito in un valore [0, 1].
+# Questi valori alimentano formule lineari che producono pesi per ogni decisione,
+# analogamente a come α e β vengono modulati dal parametro skill nel modello
+# epidemiologico di riferimento (Secure SAIS).
+
+TRAIT_NUMERIC = {
+    "molto_bassa": 0.0,
+    "bassa":       0.25,
+    "media":       0.50,
+    "alta":        0.75,
+    "molto_alta":  1.0,
+}
+
+SECURITY_TRAINING_NUMERIC = {
+    "no":          0.0,
+    "minima":      0.20,
+    "basilare":    0.40,
+    "autodidatta": 0.70,
+    "si":          1.0,
+}
+
+URGENCY_NUMERIC = {
+    "nessuna": 0.0,
+    "bassa":   0.25,
+    "media":   0.55,
+    "alta":    1.0,
+}
+
+REWARD_NUMERIC = {
+    "nessuno":          0.0,
+    "protezione_fondi": 0.35,   # leva della paura, non della cupidigia
+    "alta":             0.65,
+    "altissimo":        0.90,
+}
+
+# Semi-ampiezza dell'intervallo mostrato nel prompt (±10 punti percentuali)
+PROB_INTERVAL_HALF = 0.10
+
+
+def compute_decision_probs(profile: dict, message: dict) -> dict:
+    """
+    Calcola i pesi probabilistici per ciascuna decisione.
+
+    La logica è analoga alla modulazione di α (infection rate) tramite skill
+    nel modello Secure SAIS: ogni tratto sposta la probabilità di procedere
+    o di fermarsi in modo trasparente e riproducibile.
+
+    Restituisce un dict {decisione: probabilità} normalizzato a somma 1.
+    """
+    traits = profile.get("traits", {})
+    feats  = message.get("features", {})
+
+    imp   = TRAIT_NUMERIC.get(traits.get("impulsiveness",    "media"), 0.50)
+    trust = TRAIT_NUMERIC.get(traits.get("trust_in_brands",  "media"), 0.50)
+    att   = TRAIT_NUMERIC.get(traits.get("attention_level",  "media"), 0.50)
+    risk  = TRAIT_NUMERIC.get(traits.get("risk_aversion",    "media"), 0.50)
+    train = SECURITY_TRAINING_NUMERIC.get(profile.get("security_training", "no"), 0.0)
+
+    urg   = URGENCY_NUMERIC.get(str(feats.get("urgency", "")).lower(), 0.50)
+    rew   = REWARD_NUMERIC.get(str(feats.get("reward",  "")).lower(), 0.30)
+
+    # Punteggi grezzi (non normalizzati).
+    # I coefficienti riflettono quanto ogni fattore favorisce/ostacola la scelta.
+    scores = {
+        "PROCEDE_CON_LA_RICHIESTA":
+            0.30
+            + imp   * 0.20   # impulsività aumenta il click-through
+            + trust * 0.15   # fiducia nei brand abbassa la guardia
+            + urg   * 0.15   # urgenza riduce il tempo di riflessione
+            + rew   * 0.10   # ricompensa o paura spingono all'azione
+            - risk  * 0.20   # avversione al rischio frena
+            - att   * 0.10   # attenzione alta = più sospetti
+            - train * 0.25,  # formazione = riconosce il phishing
+
+        "IGNORA":
+            0.15
+            - imp   * 0.10   # impulsivo reagisce, non ignora
+            - urg   * 0.10   # urgente = difficile ignorare
+            + (1.0 - att) * 0.10,  # bassa attenzione → non legge nemmeno
+
+        "RIMANDA_O_NON_DECIDE":
+            0.15
+            + risk  * 0.10   # prudente ci pensa su
+            - imp   * 0.05
+            + (1.0 - att) * 0.05,
+
+        "VERIFICA_TRAMITE_CANALE_UFFICIALE":
+            0.15
+            + att   * 0.15   # attenzione alta → nota qualcosa di strano
+            + risk  * 0.10   # prudente verifica prima di agire
+            + train * 0.10   # sa che esiste una procedura ufficiale
+            - imp   * 0.05,
+
+        "SEGNALA_COME_PHISHING":
+            0.10
+            + train * 0.28   # sa che si segnala
+            + att   * 0.10   # lo ha letto con attenzione
+            - imp   * 0.05,
+    }
+
+    # Clamp al minimo 2% per evitare probabilità zero, poi normalizza
+    total = 0.0
+    for k in scores:
+        scores[k] = max(0.02, scores[k])
+        total += scores[k]
+    for k in scores:
+        scores[k] = scores[k] / total
+
+    return scores
+
+
+def compute_compromise_prob(profile: dict) -> float:
+    """
+    Stima la probabilità di COMPROMISSIONE_COMPLETATA dato che l'agente
+    ha già deciso PROCEDE_CON_LA_RICHIESTA.
+
+    Analogo alla cure rate β del modello epidemiologico: più è alto il
+    livello di awareness (training, tech_savvy, risk_aversion), più è
+    probabile che l'agente si fermi prima della compromissione.
+    """
+    traits = profile.get("traits", {})
+    imp   = TRAIT_NUMERIC.get(traits.get("impulsiveness",   "media"), 0.50)
+    risk  = TRAIT_NUMERIC.get(traits.get("risk_aversion",   "media"), 0.50)
+    tech  = TRAIT_NUMERIC.get(traits.get("tech_savvy",      "media"), 0.50)
+    trust = TRAIT_NUMERIC.get(traits.get("trust_in_brands", "media"), 0.50)
+    train = SECURITY_TRAINING_NUMERIC.get(profile.get("security_training", "no"), 0.0)
+
+    p = (
+        0.50
+        + imp   * 0.15
+        + trust * 0.10
+        - risk  * 0.15
+        - tech  * 0.10
+        - train * 0.20
+    )
+    return min(0.95, max(0.05, p))
+
+
+def format_prob_guidance(probs: dict, p_compromise: float) -> str:
+    """
+    Formatta gli intervalli di probabilità come testo da inserire nel prompt.
+    """
+    lines = []
+    for decision in ALLOWED_DECISIONS:
+        p   = probs.get(decision, 0.0)
+        lo  = max(0,   round((p - PROB_INTERVAL_HALF) * 100))
+        hi  = min(100, round((p + PROB_INTERVAL_HALF) * 100))
+        lines.append(f"- {decision}: [{lo}%–{hi}%]")
+
+    p_lo = max(0,   round((p_compromise - PROB_INTERVAL_HALF) * 100))
+    p_hi = min(100, round((p_compromise + PROB_INTERVAL_HALF) * 100))
+    lines.append(
+        f"\nSe decidi PROCEDE_CON_LA_RICHIESTA, probabilità orientativa "
+        f"di arrivare a COMPROMISSIONE_COMPLETATA: [{p_lo}%–{p_hi}%]."
+    )
+    return "\n".join(lines)
+
+
 # ------- PROMPT & CHIAMATA LLM -------
 
 def normalize_model_label(value) -> str:
@@ -331,11 +491,21 @@ def build_prompt(agent_profile: dict, message: dict) -> str:
     """
     Costruisce il prompt per un singolo agente e messaggio.
     Il messaggio e gia stato letto: la decisione simulata inizia dopo la lettura.
+
+    Gli intervalli di probabilita vengono calcolati dai trait del profilo e
+    dalle feature del messaggio, poi inseriti nel prompt come vincolo morbido.
+    Questo ancora il comportamento del modello al profilo dichiarato, riducendo
+    la sensibilita a piccole variazioni di formulazione.
     """
     traits = agent_profile.get("traits", {})
     feats = message.get("features", {})
     possible_compromise_actions = message.get("possible_compromise_actions", [])
     visible_red_flags = message.get("visible_red_flags", [])
+
+    # Calcola intervalli probabilistici dal profilo e dallo scenario
+    probs         = compute_decision_probs(agent_profile, message)
+    p_compromise  = compute_compromise_prob(agent_profile)
+    prob_guidance = format_prob_guidance(probs, p_compromise)
 
     return f"""
 Sei un utente reale chiamato {agent_profile.get('id')}. Devi simulare il comportamento spontaneo di questa persona, non dare consigli di sicurezza e non parlare come un modello che sa di essere in una simulazione.
@@ -381,7 +551,7 @@ Significato delle decisioni:
 - IGNORA: non interagisce.
 - RIMANDA_O_NON_DECIDE: non agisce subito o lascia il messaggio in sospeso.
 - VERIFICA_TRAMITE_CANALE_UFFICIALE: controlla tramite app, sito o canale ufficiale indipendente.
-- SEGNALA_COME_PHISHING: segnala, marca come sospetto o inoltra al canale anti-phishing.
+- SEGNALA_COME_PHISHING: sospetta che il messaggio sia phishing e lo segnala, lo marca come spam/sospetto, o lo inoltra a qualcuno. Non richiede certezza, basta un sospetto sufficientemente forte.
 - PROCEDE_CON_LA_RICHIESTA: accetta la premessa del messaggio ed entra nel flow richiesto.
 
 Significato di PROCEDE_CON_LA_RICHIESTA:
@@ -415,6 +585,13 @@ Criteri comportamentali:
 - Non scegliere azioni incompatibili con questo scenario.
 - Se decidi COMPROMISSIONE_COMPLETATA, la compromise_action deve essere una delle possibili azioni di compromissione indicate sopra.
 - La motivation deve essere breve e spiegare la scelta dal punto di vista dell'archetipo.
+
+Intervalli di probabilita orientativi basati sul tuo profilo e sullo scenario:
+{prob_guidance}
+
+Questi intervalli derivano dai tuoi tratti (impulsivita, fiducia nei brand, livello di attenzione, avversione al rischio, formazione) e dalle caratteristiche del messaggio (urgenza, ricompensa).
+Scegli la decisione piu coerente con il tuo profilo all'interno dell'intervallo corrispondente.
+Puoi scegliere una decisione fuori dall'intervallo solo se c'e una ragione molto specifica e coerente con il profilo; in quel caso spiegala nella motivation.
 
 Rispondi solo in JSON valido con questo schema:
 {{
